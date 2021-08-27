@@ -1,0 +1,5 @@
+name: 'disco-forever'
+packageKey: 'disco-forever'
+permissions:
+  lan: {}
+  discovery: {}
