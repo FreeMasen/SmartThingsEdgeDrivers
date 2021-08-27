@@ -3,6 +3,7 @@ local log = require 'log'
 local utils = require 'st.utils'
 local cosock = require 'cosock'
 local json = require 'dkjson'
+local capabilities = require 'st.capabilities'
 
 local function disco(driver, opts, cont)
   print('starting disco', cont)
@@ -28,8 +29,30 @@ local function disco(driver, opts, cont)
   log.debug('disco over', ct)
 end
 
+function emit_state(driver, device)
+  log.debug('Emitting state from init or added')
+  device:emit_event(capabilities.switch.switch.off())
+end
+
 local driver = Driver('Disco Forever', {
   discovery = disco,
+  lifecycle_handlers = {
+    init = emit_state,
+    added = emit_state,
+    deleted = function() log.debug("device deleted") end,
+  },
+  capability_handlers = {
+    [capabilities.switch.ID] = {
+        [capabilities.switch.commands.on.NAME] = function(_, device)
+            log.info('Turn on')
+            device:emit_event(capabilities.switch.switch.on())
+        end,
+        [capabilities.switch.commands.off.NAME] = function(...)
+          log.info('Turn Off')
+          emit_state(...)
+        end
+    }
+}
 })
 
 log.debug('Starting disco forever Driver')
