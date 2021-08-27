@@ -1,0 +1,32 @@
+name: octopi.v1
+components:
+- id: main
+  capabilities:
+  - id: switch
+    version: 1
+  - id: videoStream
+    version: 1
+  - id: thermostatOperatingState
+    version: 1
+  - id: thermostatHeatingSetpoint
+    version: 1
+  - id: temperatureMeasurement
+    version: 1
+- id: bed
+  capabilities:
+  - id: thermostatOperatingState
+    version: 1
+  - id: thermostatHeatingSetpoint
+    version: 1
+  - id: temperatureMeasurement
+    version: 1
+preferences:
+  - preferenceType: string
+    title: Username
+    required: true
+    description: Your Octopi Username for this printer
+    definition:
+      minLength: 0
+      maxLength: 20
+      stringType: text
+      default: ''
