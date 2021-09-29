@@ -1,21 +1,11 @@
-
---FIXME: in a future version of the st environment
---ltn12 should be published to the correct location
-local ltn12 = (function ()
-  local s, ltn12 = pcall(require, 'ltn12')
-  if not s then
-    return require 'socket.ltn12'
-  end
-  return ltn12
-end)()
-
+local ltn12 = require 'ltn12'
 local https = require 'ssl.https'
 local json = require 'dkjson'
 local socket = require 'socket'
 local log = require 'log'
 
 local function login(ip, username, password)
-  log.trace('login')
+  log.trace('login', ip, username)
   local body_t = {
     username = username,
     password = password,
@@ -34,6 +24,7 @@ local function login(ip, username, password)
     source = ltn12.source.string(body),
     sink = ltn12.sink.table(rep_t),
   }
+
   if not suc then
     return nil, string.format('%s %s', status, msg)
   end
@@ -54,7 +45,7 @@ end
 local function get_sites(ip, cookie, xsrf)
   local body_t = {}
   local url = string.format('https://%s/proxy/network/api/s/default/stat/sta', ip)
-  local suc, status, headers, msg = https.request{
+  local suc, status, headers, msg = https.request {
     url = url,
     method = 'GET',
     sink = ltn12.sink.table(body_t),

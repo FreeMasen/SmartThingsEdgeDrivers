@@ -9,6 +9,7 @@ local json = require 'dkjson'
 local log = require 'log'
 local disco = require 'disco'
 local server = cosock.asyncify 'server'
+local upnp = require 'upnp'
 
 local PRESENT = caps.presenceSensor.presence.present()
 local NOT_PRESENT = caps.presenceSensor.presence.not_present()
@@ -47,7 +48,7 @@ local function start_poll(driver, device)
   log.trace('start_poll')
   local cookie, xsrf
   driver.poll_handles[device.id] = driver:call_on_schedule(5, function(driver)
-    log.debug('polling');
+    log.debug(string.format('polling with cookie: %s with xsrf: %s', cookie ~= nil, xsrf ~= nil))
     local ip, client, username, password =
       device.preferences.udmIp,
       device.preferences.clientName,
@@ -124,5 +125,6 @@ local driver = Driver('Dream Presence', {
 driver.poll_handles = {}
 
 server(driver)
+upnp(driver)
 
 driver:run()
