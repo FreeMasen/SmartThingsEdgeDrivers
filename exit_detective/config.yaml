@@ -1,0 +1,5 @@
+name: 'exit-detective'
+packageKey: 'exit-detective'
+permissions:
+  lan: {}
+  discovery: {}
