@@ -4,6 +4,9 @@ This driver illustrates an interim solution to subscribing to driver life-cycle 
 
 Currently it will never discover a device to predictably exit after discovery completes.
 
+## Example
+
+[![asciicast](https://asciinema.org/a/qIYXyruwaoXylBuAXi8s3gSGw.svg)](https://asciinema.org/a/qIYXyruwaoXylBuAXi8s3gSGw)
 
 ## Known Bugs
 
