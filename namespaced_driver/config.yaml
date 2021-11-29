@@ -1,0 +1,5 @@
+name: namespaced-driver
+packageKey: namespaced-driver
+permissions:
+  lan: {}
+  discovery: {}

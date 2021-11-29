@@ -1,0 +1,6 @@
+name: namespaced-driver.v1
+components:
+  - id: main
+    capabilities:
+    - id: switch
+      version: 1
