@@ -1,0 +1,5 @@
+name: self-service
+packageKey: self-service
+permissions:
+  lan: {}
+  discovery: {}
