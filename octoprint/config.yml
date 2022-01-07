@@ -1,2 +1,5 @@
-name: 'octopi'
-packageKey: 'octopi'
+name: octoprint
+packageKey: octoprint
+permissions:
+  lan: {}
+  discovery: {}

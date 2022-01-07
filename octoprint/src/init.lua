@@ -8,55 +8,55 @@ local discovery = cosock.asyncify 'disco'
 local Octopi = cosock.asyncify 'octopi'
 local DeviceState = cosock.asyncify 'device_state'
 
+local HEATING = capabilities.thermostatOperatingState.thermostatOperatingState.heating()
+local IDLE = capabilities.thermostatOperatingState.thermostatOperatingState.idle()
+local ON = capabilities.switch.switch.on()
+local OFF = capabilities.switch.switch.off()
+local heatingSetpoint = capabilities.thermostatHeatingSetpoint.heatingSetpoint
+local temperature = capabilities.temperatureMeasurement.temperature
+
 local function update_state(device, state)
     if state.switch.is_on == true then
-        device:emit_event(capabilities.switch.switch.on())
+        device:emit_event(ON)
     elseif state.switch.is_on == false then
-        device:emit_event(capabilities.switch.switch.off())
+        device:emit_event(OFF)
     end
     local bed = device.profile.components['bed']
+    local tool = device.profile.components['tool']
     if state.bed.is_heating == true then
-        bed:emit_event(
-            capabilities.thermostatOperatingState.thermostatOperatingState.heating()
-        )
+        bed:emit_event(HEATING)
     elseif state.bed.is_heating == false then
-        bed:emit_event(
-            capabilities.thermostatOperatingState.thermostatOperatingState.idle()
-        )
+        bed:emit_event(IDLE)
     end
     if state.bed.actual ~= nil then
-        bed:emit_event(capabilities.temperatureMeasurement.temperature{
+        bed:emit_event(temperature{
             value = state.bed.actual,
             unit = 'C',
         })
     end
     if state.bed.target ~= nil then
         bed:emit_event(
-            capabilities.thermostatHeatingSetpoint.heatingSetpoint{
+            heatingSetpoint{
                 value = state.bed.target,
                 unit = 'C',
             }
         )
     end
     if state.tool.is_heating == true then
-        device:emit_event(
-            capabilities.thermostatOperatingState.thermostatOperatingState.heating()
-        )
+        tool:emit_event(HEATING)
     end
     if state.tool.is_heating == false then
-        device:emit_event(
-            capabilities.thermostatOperatingState.thermostatOperatingState.idle()
-        )
+        tool:emit_event(IDLE)
     end
     if state.tool.actual ~= nil then
-        device:emit_event(capabilities.temperatureMeasurement.temperature{
+        tool:emit_event(temperature{
             value = state.tool.actual,
             unit = 'C',
         })
     end
     if state.tool.target ~= nil then
-        device:emit_event(
-            capabilities.thermostatHeatingSetpoint.heatingSetpoint{
+        tool:emit_event(
+            heatingSetpoint{
                 value = state.tool.target,
                 unit = 'C',
             }
@@ -104,27 +104,34 @@ end
 ---@param device Device
 local function device_added(driver, device)
     log.debug('device_added', device.NAME)
-
-    if not driver.datastore.printers[device.device_network_id] then
+    local api_key = device:get_field('api_key')
+    local printer_url = device:get_field('printer_url')
+    log.debug(utils.stringify_table({api_key =  api_key, printer_url = printer_url}, 'persistent', true))
+    if not printer_url then
         log.debug('looking up device')
-        for _, printer in ipairs(discovery.ssdp_query()) do
-            if not driver.datastore.printers[printer.id] then
-                driver.datastore.printers[printer.id] = printer
+        for _, p in ipairs(discovery.ssdp_query()) do
+            if device.device_network_id == p.id then
+                printer_url = p.url
+                device:set_field('printer_url', printer_url, {persist = true})
+                break
             end
         end
     end
-    local printer = driver.datastore.printers[device.device_network_id]
+    log.debug(utils.stringify_table({api_key =  api_key, printer_url = printer_url}, 'persistent', true))
+    
     local octopi = Octopi.new(
         device.id,
         device.name,
-        printer.url,
-        device.preferences.username,
-        printer.api_key
+        printer_url,
+        device.preferences.usnm,
+        api_key
     )
     device:set_field('octopi', octopi)
-    local s = assert(octopi:gain_authorization())
+    local s, e = assert(octopi:gain_authorization())
     if type(s) == 'string' then
-        printer.api_key = s
+        device:set_field('api_key', s, {persist = true})
+    else
+        log.debug('bad api key from gain_authorization', e or utils.stringify_table(s, 'api_key', true))
     end
 
     start_poll(driver, device, octopi)
@@ -189,8 +196,9 @@ local function info_changed(driver, device)
     if not octopi then
         return log.error('Failed to get octopi from device')
     end
+    log.debug(utils.stringify_table(device.preferences, 'preferences', true))
     if not octopi:has_key() then
-        octopi.user = device.preferences.username
+        octopi.user = device.preferences.usnm
         local s = assert(octopi:gain_authorization())
         if type(s) == 'string' then
             local printer = driver.datastore.printers[device.device_network_id]
@@ -200,7 +208,7 @@ local function info_changed(driver, device)
     end
 end
 
-local driver = Driver('octopi', {
+local driver = Driver('Octoprint', {
     lifecycle_handlers = {
         init = device_added,
         added = device_added,
@@ -209,8 +217,9 @@ local driver = Driver('octopi', {
     },
     capability_handlers = {
         [capabilities.switch.ID] = {
-            [capabilities.switch.commands.on.NAME] = function ()
+            [capabilities.switch.commands.on.NAME] = function (_, device)
                 log.warn('Cannot turn on printer')
+                device:emit_event(OFF)
             end,
             [capabilities.switch.commands.off.NAME] = handle_off
         },

@@ -174,7 +174,7 @@ local function check_tool_state(octopi, device)
         log.error('Faild to get tool temp', err)
         return TempState.all()
     end
-    return compare_temp_states(device, 'main', info)
+    return compare_temp_states(device, 'tool', info)
 end
 
 
