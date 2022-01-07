@@ -1,5 +1,6 @@
 local http = require 'socket.http'
 local ltn12 = require 'socket.ltn12'
+local socket = require 'socket'
 local json = require 'dkjson'
 local log = require 'log'
 
@@ -66,7 +67,8 @@ end
 function OctoPi:gain_authorization()
     log.trace('OctoPi:gain_authorization')
     if self:has_key() then
-        return 1
+        log.debug('previously authorized')
+        return self.api_key
     end
     if not self:has_user() then
         return nil, 'No user to grant permission'
@@ -96,7 +98,8 @@ function OctoPi:gain_authorization()
         return nil, string.format('Failed to request auth %s, %s', status_or_err, status_msg)
     end
     self.pending_url = headers.location
-    while true do
+    local start = socket.gettime()
+    for i=1, 60 do
         log.info('polling for approval')
         local key, err = self:_poll_for_approval()
         if not key then
@@ -108,8 +111,9 @@ function OctoPi:gain_authorization()
             return key
         end
         log.info('no approval yet, sleeping for 1')
-        sleep(1)
+        socket.sleep(1)
     end
+    return self:gain_authorization()
 end
 
 ---Poll the auth endpoint for approval

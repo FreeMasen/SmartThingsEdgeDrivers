@@ -42,7 +42,7 @@ local function add_device(driver, device_id, device_number)
         type = 'LAN',
         deviceNetworkId = device_id,
         label = device_name,
-        profileReference = 'octopi.v1',
+        profileReference = 'octoprint.v1',
         vendorProvidedName = device_name,
     }
     local device_info_json = json.encode(device_info)
