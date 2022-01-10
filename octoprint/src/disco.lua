@@ -14,7 +14,8 @@ local multicast_msg = table.concat({
     'M-SEARCH * HTTP/1.1',
     string.format('HOST: %s:%s', multicast_ip, multicast_port),
     'MAN: ' .. '"ssdp:discover"',
-    'ST: ' .. 'ssdp:all',
+    'MX: 3',
+    'ST: ' .. 'upnp:rootdevice',
 }, '\r\n')
 
 ---@class SsdpDevice
@@ -66,9 +67,10 @@ local function ssdp_query()
         log.error('Failed to sent multicast_msg', err)
         return nil, err
     end
+    local start = os.time()
     s:settimeout(1)
     local devices = {}
-    while true do
+    while os.difftime(start, os.time()) < 15 do
         local resp
         resp, err = s:receivefrom()
         if err == 'timeout' then

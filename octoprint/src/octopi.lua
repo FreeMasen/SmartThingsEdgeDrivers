@@ -63,7 +63,7 @@ function OctoPi:has_user()
 end
 
 ---Follow the auth plugin workflow to gain an api_key
----@return integer|string?, string? @comment If the key already exists, this return 1 Returns the api_key whenthe auth_workflow completes
+---@return integer|string?, string? @Returns the api_key when the auth_workflow completes
 function OctoPi:gain_authorization()
     log.trace('OctoPi:gain_authorization')
     if self:has_key() then

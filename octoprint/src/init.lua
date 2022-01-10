@@ -80,7 +80,7 @@ local function poll(driver, device, octopi)
     check_state(device, octopi)
     driver.device_poll_handles[device.id] = driver:call_with_delay(5, function ()
         poll(driver, device, octopi)
-    end, string.format('%s poll', device.NAME))
+    end, string.format('%s poll', device.label or device))
 end
 
 --- Start the poll loop for a device
