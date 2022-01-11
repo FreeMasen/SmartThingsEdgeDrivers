@@ -16,25 +16,32 @@ local heatingSetpoint = capabilities.thermostatHeatingSetpoint.heatingSetpoint
 local temperature = capabilities.temperatureMeasurement.temperature
 
 local function update_state(device, state)
+    log.trace('updating state')
     if state.switch.is_on == true then
+        log.trace('emitting on')
         device:emit_event(ON)
     elseif state.switch.is_on == false then
+        log.trace('emitting off')
         device:emit_event(OFF)
     end
     local bed = device.profile.components['bed']
     local tool = device.profile.components['tool']
     if state.bed.is_heating == true then
+        log.trace('bed is heating')
         bed:emit_event(HEATING)
     elseif state.bed.is_heating == false then
+        log.trace('bed isn\'t heating')
         bed:emit_event(IDLE)
     end
     if state.bed.actual ~= nil then
+        log.trace('bed temp', state.bed.actual)
         bed:emit_event(temperature{
             value = state.bed.actual,
             unit = 'C',
         })
     end
     if state.bed.target ~= nil then
+        log.trace('bed target', state.bed.target)
         bed:emit_event(
             heatingSetpoint{
                 value = state.bed.target,
@@ -43,18 +50,22 @@ local function update_state(device, state)
         )
     end
     if state.tool.is_heating == true then
+        log.trace('tool is heating')
         tool:emit_event(HEATING)
     end
     if state.tool.is_heating == false then
+        log.trace('tool isn\'t heating')
         tool:emit_event(IDLE)
     end
     if state.tool.actual ~= nil then
+        log.trace('tool temp', state.tool.actual)
         tool:emit_event(temperature{
             value = state.tool.actual,
             unit = 'C',
         })
     end
     if state.tool.target ~= nil then
+        log.trace('tool target', state.tool.target)
         tool:emit_event(
             heatingSetpoint{
                 value = state.tool.target,
@@ -78,9 +89,11 @@ end
 --- Recursive poll for a single device
 local function poll(driver, device, octopi)
     check_state(device, octopi)
+    local poll_name = string.format('%s-poll', device.label or device or 'none')
+    log.debug('registering', poll_name)
     driver.device_poll_handles[device.id] = driver:call_with_delay(5, function ()
         poll(driver, device, octopi)
-    end, string.format('%s poll', device.label or device))
+    end, poll_name)
 end
 
 --- Start the poll loop for a device

@@ -333,7 +333,10 @@ function OctoPi:_post_request(endpoint, body_t, no_retry)
         return self:_post_request(endpoint, body_t, true)
     end
     log.trace(string.format('POST RESPONSE "%s" "%s"'), table.concat(body or {'NO BODY'}, ''))
-    return nil, string.format('%s: %s', s_or_e, status_msg)
+    if status_msg then
+        return nil, string.format('%s: %s', s_or_e, status_msg)
+    end
+    return nil, s_or_e
 end
 
 return OctoPi
