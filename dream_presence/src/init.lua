@@ -50,6 +50,7 @@ local function start_poll(driver, device)
     while has_keys(driver.datastore, 'username', 'password', 'ip')
     and not is_nil_or_empty_string(device.preferences.clientname)
     and device:get_field('running') do
+      local is_present, event, last, err
       log.debug(string.format('polling with cookie: %s with xsrf: %s', cookie ~= nil, xsrf ~= nil))
       local ip, client, username, password =
         driver.datastore.ip,
@@ -63,13 +64,12 @@ local function start_poll(driver, device)
           goto continue
         end
       end
-      local is_present, err = api.check_for_presence(ip, client, cookie, xsrf)
+      is_present, err = api.check_for_presence(ip, client, cookie, xsrf)
       if err then
         cookie, xsrf = nil, nil
         goto continue
       end
-      local event
-      local last = device:get_latest_state('main', 'presenceSensor', 'presence')
+      last = device:get_latest_state('main', 'presenceSensor', 'presence')
       if is_present then
         if last ~= PRESENT.value.value then
           event = PRESENT

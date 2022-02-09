@@ -70,7 +70,6 @@ local function check_for_presence(ip, device_name, cookie, xsrf, ct)
     log.error("failed to complete request:", err)
     return nil, err
   end
-  print('sites', json.encode(sites))
   for _, client in ipairs(sites.data) do
     if client.hostname == device_name then
       local now = socket.gettime()
