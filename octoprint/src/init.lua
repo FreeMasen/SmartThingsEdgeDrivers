@@ -86,16 +86,6 @@ local function check_state(device, octopi)
     update_state(device, state)
 end
 
---- Recursive poll for a single device
-local function poll(driver, device, octopi)
-    check_state(device, octopi)
-    local poll_name = string.format('%s-poll', device.label or device or 'none')
-    log.debug('registering', poll_name)
-    driver.device_poll_handles[device.id] = driver:call_with_delay(5, function ()
-        poll(driver, device, octopi)
-    end, poll_name)
-end
-
 --- Start the poll loop for a device
 ---@param driver Driver
 ---@param device Device
@@ -105,18 +95,22 @@ local function start_poll(driver, device, octopi)
     if not octopi then
         error('octopi is nil')
     end
-    driver.device_poll_handles = driver.device_poll_handles or {}
-    if driver.device_poll_handles[device.id] then
-        driver:cancel_timer(driver.device_poll_handles[device.id])
-    end
-    poll(driver, device, octopi)
+    driver.device_poll_handles[device.id] = true
+    local poll_name = string.format('%s-poll', device.label or device or 'none')
+    log.debug('start poll for', poll_name)
+    cosock.spawn(function()
+        while driver.device_poll_handles[device.id] do
+            check_state(device, octopi)
+            cosock.socket.sleep(1)
+        end
+    end, poll_name)
 end
 
 --- Handle both the device_added and device_init lifecycle events
 ---@param driver Driver
 ---@param device Device
 local function device_added(driver, device)
-    log.debug('device_added', device.NAME)
+    log.debug('device_added', utils.stringify_table(device))
     local api_key = device:get_field('api_key')
     local printer_url = device:get_field('printer_url')
     log.debug(utils.stringify_table({api_key =  api_key, printer_url = printer_url}, 'persistent', true))
@@ -154,8 +148,7 @@ end
 ---@param driver Driver
 ---@param device Device
 local function device_removed(driver, device)
-    driver.device_poll_handles = driver.device_poll_handles or {}
-    driver:cancel_timer(driver.device_poll_handles[device.id])
+    driver.device_poll_handles[device.id] = nil
 end
 
 ---Handle the off switch capability event
@@ -217,7 +210,7 @@ local function info_changed(driver, device)
             local printer = driver.datastore.printers[device.device_network_id]
             printer.api_key = s
         end
-        start_poll(driver, device)
+        start_poll(driver, device, octopi)
     end
 end
 
@@ -242,7 +235,6 @@ local driver = Driver('Octoprint', {
     },
     discovery = discovery.disco_handler,
 })
----This will keep a map of raw device data persistent. This will
----Include the device network id, url and api_key when granted
-driver.datastore.printers = driver.datastore.printers or {}
+
+driver.device_poll_handles = {}
 driver:run()
