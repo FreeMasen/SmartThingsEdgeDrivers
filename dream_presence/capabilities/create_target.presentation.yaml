@@ -1,0 +1,17 @@
+id: honestadmin11679.targetcreate
+version: 1
+dashboard:
+  states:
+    - label: Create Target
+      alternatives: []
+  basicPlus: []
+  actions:
+    - displayType: pushButton
+      pushButton:
+        command: create
+detailView:
+  - label: Create Target
+    displayType: pushButton
+    pushButton:
+      command: create
+

@@ -1,5 +1,5 @@
-name: 'dream-presence'
-packageKey: 'dream-presence'
+name: dream-presence
+packageKey: dream-presence
 permissions:
   lan: {}
   discovery: {}

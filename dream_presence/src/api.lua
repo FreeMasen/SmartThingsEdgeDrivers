@@ -69,6 +69,7 @@ local function check_for_presence(ip, device_name, cookie, xsrf)
   if not sites then
     error(err)
   end
+  print('sites', json.encode(sites))
   for _, client in ipairs(sites.data) do
     if client.hostname == device_name then
       local now = socket.gettime()

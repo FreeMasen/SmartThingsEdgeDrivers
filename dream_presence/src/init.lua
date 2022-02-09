@@ -1,20 +1,19 @@
 local cosock = require 'cosock'
 
-math.randomseed(cosock.socket.gettime()*10000)
-
 local Driver = require 'st.driver'
 local api = cosock.asyncify 'api'
 local caps = require 'st.capabilities'
-local json = require 'dkjson'
 local log = require 'log'
 local disco = require 'disco'
-local server = cosock.asyncify 'server'
-local upnp = require 'upnp'
+local utils = require 'st.utils'
+local parentCapID = "honestadmin11679.targetcreate"
+local createTarget = caps[parentCapID]
 
 local PRESENT = caps.presenceSensor.presence.present()
 local NOT_PRESENT = caps.presenceSensor.presence.not_present()
 
-
+local TARGET_PROFILE = 'dream-presence-target.v1'
+local parentDeviceId
 
 ---Check if a variable is nil or an empty string
 ---@param v string|nil
@@ -45,51 +44,82 @@ end
 ---@param driver Driver
 ---@param device Device
 local function start_poll(driver, device)
-  log.trace('start_poll')
-  local cookie, xsrf
-  driver.poll_handles[device.id] = driver:call_on_schedule(5, function(driver)
-    log.debug(string.format('polling with cookie: %s with xsrf: %s', cookie ~= nil, xsrf ~= nil))
-    local ip, client, username, password =
-      device.preferences.udmIp,
-      device.preferences.clientName,
-      device.preferences.username,
-      device.preferences.password
-    if not cookie or not xsrf then
-      cookie, xsrf = api.login(ip, username, password)
-      if not cookie then
-        log.debug('Error logging in', xsrf)
+  log.trace('start_poll', utils.stringify_table(device.preferences, 'preferences', true))
+  cosock.spawn(function()
+    local cookie, xsrf
+    while has_keys(driver.datastore, 'username', 'password', 'ip')
+    and not is_nil_or_empty_string(device.preferences.clientname)
+    and device:get_field('running') do
+      log.debug(string.format('polling with cookie: %s with xsrf: %s', cookie ~= nil, xsrf ~= nil))
+      local ip, client, username, password =
+        driver.datastore.ip,
+        device.preferences.clientname,
+        driver.datastore.username,
+        driver.datastore.password
+      if not cookie or not xsrf then
+        cookie, xsrf = api.login(ip, username, password)
+        if not cookie then
+          log.debug('Error logging in', xsrf)
+          return
+        end
+      end
+      local is_present, err = api.check_for_presence(ip, client, cookie, xsrf)
+      if err then
+        cookie, xsrf = nil, nil
         return
       end
-    end
-    local is_present, err = api.check_for_presence(ip, client, cookie, xsrf)
-    if err then
-      cookie, xsrf = nil, nil
-      return
-    end
-    local event
-    local last = device:get_latest_state('main', 'presenceSensor', 'presence')
-    if is_present then
-      if last ~= PRESENT.value.value then
-        event = PRESENT
+      local event
+      local last = device:get_latest_state('main', 'presenceSensor', 'presence')
+      if is_present then
+        if last ~= PRESENT.value.value then
+          event = PRESENT
+        end
+      else
+        if last ~= NOT_PRESENT.value.value then
+          event = caps.presenceSensor.presence.not_present()
+        end
       end
-    else
-      if last ~= NOT_PRESENT.value.value then
-        event = caps.presenceSensor.presence.not_present()
+      if event then
+        device:emit_event(event)
       end
+      cosock.socket.sleep(5)
     end
-    if event then
-      device:emit_event(event)
-    end
+    device:set_field("running", false)
   end)
 end
+
 ---Validates the device preferences and then starts the poll
 ---@param driver Driver
 ---@param device Device
 local function device_added(driver, device)
-  log.trace('device added', device.id)
-  if not has_keys(device.preferences, 'username', 'password', 'clientName', 'udmIp') then
+  log.trace('device added', device.id, not not device.profile.components.main.capabilities[parentCapID])
+  if not not device.profile.components.main.capabilities[parentCapID] then
+    parentDeviceId = device.id
+    log.trace('found parent device')
+    if not has_keys(device.preferences, 'username', 'password', 'udmip') then
+      log.debug('missing preference')
+      log.debug('username', device.preferences.username)
+      log.debug('ip', device.preferences.udmip)
+      log.debug('password', (device.preferences.password and 'is set') or 'is unset')
+      return
+    end
+    log.trace('setting global config options')
+    driver.datastore.username = device.preferences.username
+    driver.datastore.password = device.preferences.password
+    driver.datastore.ip = device.preferences.udmip
+    driver.datastore:save()
+    log.trace('spawning any non-running polls')
+    for _, child in ipairs(driver:get_devices()) do
+      if not child:get_field('running') then
+        if child.id ~= parentDeviceId then
+          start_poll(driver, child)
+          device:set_field("running", true)
+        end
+      end
+    end
     return
   end
+  device:set_field("running", true)
   start_poll(driver, device)
 end
 
@@ -97,8 +127,7 @@ end
 ---@param driver Driver
 ---@param device Device
 local function device_removed(driver, device)
-  driver:cancel_timer(driver.poll_handles[device.id])
-  driver.poll_handles[device.id] = nil
+  device:set_field("running", false)
 end
 
 ---When a preference update comes down, stop any existing poll loop
@@ -106,9 +135,6 @@ end
 ---@param driver Driver
 ---@param device Device
 local function info_changed(driver, device)
-  if driver.poll_handles[device.id] then
-    driver:cancel_timer(driver.poll_handles[device.id])
-  end
   device_added(driver, device)
 end
 
@@ -120,11 +146,19 @@ local driver = Driver('Dream Presence', {
     infoChanged = info_changed,
   },
   discovery = disco.disco,
+  capability_handlers = {
+    [createTarget.ID] = {
+      [createTarget.commands.create.NAME] = function (driver, device)
+          disco.add_device(driver, 'Dream Presence Target', TARGET_PROFILE, device.id)
+      end
+    }
+  }
 })
 
-driver.poll_handles = {}
+-- server(driver)
 
-server(driver)
-upnp(driver)
+-- cosock.spawn(function()
+--   upnp(driver)
+-- end)
 
 driver:run()
