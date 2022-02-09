@@ -1,0 +1,5 @@
+name: 'debug-env'
+packageKey: 'debug-env'
+permissions:
+  lan: {}
+  discovery: {}

@@ -1,0 +1,6 @@
+name: debug-env.v1
+components:
+  - id: main
+    capabilities:
+    - id: switch
+      version: 1
