@@ -28,8 +28,9 @@ I highly recommend that you create a readonly user for this driver to use.
 
 Log into your Dream Machine by visiting https://192.168.1.1 (Note your device may be configured at a different IP address),
 on the bottom of the next page, there should be a "Users" button, select that.
-From the users page, the top right should have an "Add User" button, when you select this it will drop down with
-options. Select "Limited Admin" from the "Role" field and "local Access Only" from the "Account Type" field. Finally
+From the users page, the top right should have an "Add User" button, when you select this it will drop down with options
+choose "Add Admin". Select "Limited Admin" from the "Role" field and "local Access Only"
+from the "Account Type" field. Finally
 you can enter your chosen username and password and click "Add". Now you have a read only user.
 
 Once you have this primary device created, you can add your first presence sensor. To do this, from the device screen
