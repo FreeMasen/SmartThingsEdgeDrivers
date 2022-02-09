@@ -1,7 +1,6 @@
 local Driver = require 'st.driver'
 local log = require 'log'
-local utils = require 'st.utils'
-local cosock = require 'cosock'
+local socket = require 'socket'
 local json = require 'dkjson'
 local capabilities = require 'st.capabilities'
 
@@ -20,16 +19,16 @@ local function disco(driver, opts, cont)
     local device_info_json = json.encode(device_info)
     assert(driver.device_api.create_device(device_info_json))
   end
-  local ct = 0
+  local continues = 0
   while cont() do
-    ct = ct + 1
-    log.debug(ct, 'disco', utils.stringify_table(opts))
-    cosock.socket.sleep(10)
+    log.debug('disco loop', continues)
+    socket.sleep(1)
+    continues = continues + 1
   end
-  log.debug('disco over', ct)
+  log.debug('disco over', continues)
 end
 
-function emit_state(driver, device)
+local function emit_state(driver, device)
   log.debug('Emitting state from init or added')
   device:emit_event(capabilities.switch.switch.off())
 end
