@@ -64,10 +64,11 @@ local function get_sites(ip, cookie, xsrf)
   return json.decode(table.concat(body_t))
 end
 
-local function check_for_presence(ip, device_name, cookie, xsrf)
+local function check_for_presence(ip, device_name, cookie, xsrf, ct)
   local sites, err = get_sites(ip, cookie, xsrf)
   if not sites then
-    error(err)
+    log.error("failed to complete request:", err)
+    return nil, err
   end
   print('sites', json.encode(sites))
   for _, client in ipairs(sites.data) do

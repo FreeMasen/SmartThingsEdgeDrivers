@@ -60,13 +60,13 @@ local function start_poll(driver, device)
         cookie, xsrf = api.login(ip, username, password)
         if not cookie then
           log.debug('Error logging in', xsrf)
-          return
+          goto continue
         end
       end
       local is_present, err = api.check_for_presence(ip, client, cookie, xsrf)
       if err then
         cookie, xsrf = nil, nil
-        return
+        goto continue
       end
       local event
       local last = device:get_latest_state('main', 'presenceSensor', 'presence')
@@ -82,6 +82,7 @@ local function start_poll(driver, device)
       if event then
         device:emit_event(event)
       end
+      ::continue::
       cosock.socket.sleep(5)
     end
     device:set_field("running", false)
