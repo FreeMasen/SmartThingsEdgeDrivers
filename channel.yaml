@@ -1,0 +1,7 @@
+- channelId: 2076fb52-0ef5-4db9-aa7d-34fb6de0b6a8
+  name: FreeMasen's Drivers
+  description: Collection of random drivers
+  type: DRIVER
+  termsOfServiceUrl: https://github.com/FreeMasen/SmartThingsEdgeDrivers/blob/main/license.txt
+  createdDate: '2021-08-27T18:43:00.689397Z'
+  lastModifiedDate: '2021-08-27T18:43:00.689398Z'
