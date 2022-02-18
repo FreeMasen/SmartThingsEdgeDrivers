@@ -1,0 +1,12 @@
+dashboard:
+  states:
+    - label: '{{targetCount.value}} targets'
+  actions: []
+  basicPlus: []
+detailView:
+  - label: Target Count
+    displayType: state
+    state:
+      label: '{{targetCount.value}} targets'
+id: honestadmin11679.targetCount
+version: 1
