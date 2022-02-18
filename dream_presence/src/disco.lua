@@ -35,6 +35,7 @@ local function disco(driver)
     add_device(driver)
   elseif #(devices or {}) == 1 then
     add_device(driver, "Target", "dream-presence-target.v1")
+    
   else
     log.debug('already have devices', #devices)
   end

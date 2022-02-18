@@ -4,6 +4,8 @@ components:
     capabilities:
     - id: honestadmin11679.targetcreate
       version: 1
+    - id: honestadmin11679.targetCount
+      version: 1
 preferences:
   - preferenceType: string
     name: username
