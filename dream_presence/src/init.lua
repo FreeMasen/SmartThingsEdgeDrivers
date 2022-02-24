@@ -10,6 +10,7 @@ local createCapID = "honestadmin11679.targetcreate"
 local createTarget = caps[createCapID]
 local displayCapID = "honestadmin11679.targetCount"
 local display = caps[displayCapID]
+local presence = require 'presence'
 
 local PRESENT = caps.presenceSensor.presence.present()
 local NOT_PRESENT = caps.presenceSensor.presence.not_present()
@@ -46,13 +47,10 @@ end
 ---@param driver Driver
 ---@param device Device
 local function start_poll(driver, device)
-  log.trace(caps.get_capability_definition("honestadmin11679.targetCount", 1, true))
-  log.trace('start_poll', utils.stringify_table(device.preferences, 'preferences', true))
+  log.trace('start_poll')
   cosock.spawn(function()
     local cookie, xsrf
-    while has_keys(driver.datastore, 'username', 'password', 'ip')
-    and not is_nil_or_empty_string(device.preferences.clientname)
-    and device:get_field('running') do
+    while has_keys(device.preferences, 'username', 'password', 'udmip') do
       local is_present, event, last, err
       log.debug(string.format('polling with cookie: %s with xsrf: %s', cookie ~= nil, xsrf ~= nil))
       local ip, client, username, password =
@@ -133,6 +131,9 @@ local function device_added(driver, device)
     parentDeviceId = device.id
     log.trace('found parent device')
     emit_target_count(driver, device)
+    presence.spawn_presence_task(
+      ip,
+    )
     local devices = driver:get_devices()
     local ready_to_poll = has_keys(device.preferences, 'username', 'password', 'udmip')
     if not ready_to_poll then
@@ -177,6 +178,15 @@ end
 ---@param driver Driver
 ---@param device Device
 local function info_changed(driver, device)
+  if device_is_parent(device) then
+    local tx = assert(device.get_field("update_tx"))
+    tx:send({
+      type = "credentials-update",
+      username = device.preferences.username,
+      password = device.preferences.password,
+      ip = device.preferences.udmip,
+    })
+  end
   device_added(driver, device)
 end
 

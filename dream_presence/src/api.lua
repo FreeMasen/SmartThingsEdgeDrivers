@@ -4,6 +4,7 @@ local json = require 'dkjson'
 local socket = require 'socket'
 local log = require 'log'
 
+
 local function login(ip, username, password)
   log.trace('login', ip, username)
   local body_t = {
@@ -82,5 +83,6 @@ end
 
 return {
   check_for_presence = check_for_presence,
-  login = login
+  login = login,
+  get_sites = get_sites,
 }
