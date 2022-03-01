@@ -1,0 +1,31 @@
+id: honestadmin11679.temperatureSetPoint
+version: 1
+status: proposed
+name: Temperature
+attributes:
+  target:
+    schema:
+      type: object
+      properties:
+        value:
+          type: number
+          minimum: 0
+          maximum: 300
+        unit:
+          type: string
+          enum: 
+            - C
+          default: C
+      additionalProperties: false
+      required:
+        - value
+    setter: setTarget
+commands:
+  setTarget:
+    arguments:
+    - name: setTarget
+      required: true
+      schema:
+        type: number
+      type: number
+ocfResourceType: x.com.st.temperature.heating
