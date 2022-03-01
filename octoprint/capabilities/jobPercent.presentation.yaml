@@ -1,0 +1,13 @@
+dashboard:
+  states:
+    - label: '{{jobPercent.value}}'
+      alternatives: []
+  actions: []
+  basicPlus: []
+detailView:
+  - label: Job Progress
+    displayType: state
+    state:
+      label: "{{jobPercent.value}}{{jobPercent.unit}}"
+id: honestadmin11679.jobPercent
+version: 1

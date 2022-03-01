@@ -1,0 +1,18 @@
+dashboard:
+  states:
+    - label: '{{temperatureSetPoint.target}}{{temperatureSetPoint.unit}}'
+      alternatives: []
+  actions: []
+  basicPlus: []
+detailView:
+  - label: Target
+    displayType: slider
+    slider:
+      command: setTemperatureSetPoint
+      value: temperatureSetPoint.target
+      unit: temperatureSetPoint.unit
+      range:
+        - 0
+        - 300
+id: honestadmin11679.temperatureSetPoint
+version: 1

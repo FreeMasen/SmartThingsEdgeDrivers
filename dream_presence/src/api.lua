@@ -4,6 +4,7 @@ local json = require 'dkjson'
 local socket = require 'socket'
 local log = require 'log'
 
+
 local function login(ip, username, password)
   log.trace('login', ip, username)
   local body_t = {
@@ -33,16 +34,20 @@ local function login(ip, username, password)
   end
   local cookie = headers['set-cookie']
   if not cookie then
+    log.error("No cookie in response")
     return nil, 'no cookie in response'
   end
   local xsrf = headers['x-csrf-token']
   if not xsrf then
+    log.error("No xsrf token in response")
     return nil, 'no X-CSRF-Token'
   end
+  log.info("Successfully logged in")
   return cookie, xsrf
 end
 
 local function get_sites(ip, cookie, xsrf)
+  log.trace("get_sites")
   local body_t = {}
   local url = string.format('https://%s/proxy/network/api/s/default/stat/sta', ip)
   local suc, status, headers, msg = https.request {
@@ -56,11 +61,14 @@ local function get_sites(ip, cookie, xsrf)
     }
   }
   if not suc then
+    log.error("Error getting sites", status)
     return nil, status
   end
   if status ~= 200 then
+    log.error("Non 200 error code: ", status, msg)
     return nil, string.format('Error in reply %s\n%s', msg, table.concat(body_t))
   end
+  log.debug("Got sites")
   return json.decode(table.concat(body_t))
 end
 
@@ -82,5 +90,6 @@ end
 
 return {
   check_for_presence = check_for_presence,
-  login = login
+  login = login,
+  get_sites = get_sites,
 }

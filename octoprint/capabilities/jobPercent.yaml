@@ -1,0 +1,32 @@
+id: honestadmin11679.jobPercent
+version: 1
+status: proposed
+name: Job Percent
+attributes:
+  blockPercent:
+    schema:
+      type: object
+      properties:
+        value:
+          type: number
+          minimum: 0
+          maximum: 100
+        unit:
+          type: string
+          enum:
+            - '%'
+          default: '%'
+      additionalProperties: false
+      required:
+        - value
+    enumCommands: []
+commands:
+  setJob:
+    name: setJob
+    arguments:
+      - name: value
+        optional: false
+        schema:
+          type: number
+          minimum: 0
+          maximum: 100
