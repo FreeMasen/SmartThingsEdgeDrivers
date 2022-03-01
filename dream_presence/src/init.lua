@@ -74,18 +74,6 @@ local function handle_state_change(ch, driver)
   end
 end
 
-local function timeout_loop_handler(driver, reset)
-  -- if driver.update_tx and not reset then
-  --   driver.update_tx:send(presence.timeout_message())
-  -- end
-  -- if driver.timeout_task then
-  --   driver:cancel_timer(driver.timeout_task)
-  -- end
-  -- driver.timeout_task = driver:call_with_delay(5, function(driver)
-  --   timeout_loop_handler(driver)
-  -- end, "timeout loop")
-end
-
 local function handle_parent_device_added(driver, device)
   log.trace("handle_parent_device_added")
   parentDeviceId = device.id
@@ -112,7 +100,6 @@ local function handle_parent_device_added(driver, device)
   driver.event_listener = driver:register_channel_handler(event_rx, function()
     handle_state_change(event_rx, driver)
   end, "device updates")
-  timeout_loop_handler(driver)
 end
 
 local function handle_child_device_added(driver, device)
@@ -122,7 +109,6 @@ local function handle_child_device_added(driver, device)
       log.warn("Attempt to add child device w/o update_tx")
       return
     end
-    timeout_loop_handler(driver, true)
     driver.update_tx:send(presence.new_client_message(device.id, device.preferences.clientname))
   end
 end
@@ -154,7 +140,6 @@ end
 ---@param device Device
 local function info_changed(driver, device)
   if device_is_parent(device) then
-    timeout_loop_handler(driver, true)
     driver.update_tx:send({
       type = "credentials-update",
       username = device.preferences.username,

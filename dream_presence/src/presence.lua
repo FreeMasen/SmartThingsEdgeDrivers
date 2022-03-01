@@ -12,7 +12,6 @@ end
 
 local NEW_CLIENT = "new-client"
 local CREDS_UPDATE = "credentials-update"
-local TIMEOUT = "timeout"
 
 ---Create a new client message table
 ---@param device_id string The device id for this client
@@ -33,10 +32,6 @@ local function creds_update_message(ip, username, password)
     username = username,
     password = password,
   }
-end
-
-local function timeout_message()
-  return { type = TIMEOUT }
 end
 
 local function check_states(ip, device_names, creds, event_tx)
@@ -97,7 +92,6 @@ local function spawn_presence_task(ip, device_names, username, password)
           creds.cookie = nil
           creds.xsrf = nil
           ip = msg.ip or ip
-        elseif msg.type == TIMEOUT then
         else
           log.warn("unknown message type", utils.stringify_table(msg, "msg", true))
         end
