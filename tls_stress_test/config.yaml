@@ -1,0 +1,5 @@
+name: tls-stress-test
+packageKey: tls-stress-test
+permissions:
+  lan: {}
+  discovery: {}

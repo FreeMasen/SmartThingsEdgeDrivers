@@ -81,6 +81,8 @@ local function check_states(ip, device_names, creds, event_tx)
   end
   --- Set all missing devices to not present
   for device_name, device_id in pairs(missing_clients) do
+    log.debug("missing name ", device_name,
+    device_names[device_name] and utils.stringify_table(device_names[device_name]))
     if device_names[device_name].state then
       event_tx:send({
         device_id = device_id,
@@ -91,9 +93,13 @@ local function check_states(ip, device_names, creds, event_tx)
   end
 end
 
+local function dump_device_names(device_names)
+  print(utils.stringify_table(device_names))
+end
 
 local function spawn_presence_task(ip, device_names, username, password, timeout)
   log.trace("spawn_presence_task")
+  dump_device_names(device_names)
   local update_tx, update_rx = cosock.channel.new()
   local event_tx, event_rx = cosock.channel.new()
   cosock.spawn(function()
@@ -118,6 +124,7 @@ local function spawn_presence_task(ip, device_names, username, password, timeout
             state = false,
             id = msg.device_id,
           }
+          dump_device_names(device_names)
         elseif msg.type == CREDS_UPDATE then
           creds.username = msg.username or username
           creds.password = msg.password or password

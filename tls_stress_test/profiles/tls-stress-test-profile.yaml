@@ -1,0 +1,26 @@
+name: tls-stress-test.v1
+components:
+  - id: main
+    capabilities:
+      - id: switch
+        version: 1
+preferences:
+  - preferenceType: string
+    title: Url
+    required: true
+    description: The https url you'd like to hit on your local network
+    name: httpsUrl
+    definition:
+      minLength: 0
+      maxLength: 36
+      stringType: text
+      default: ''
+  - preferenceType: integer
+    title: Burst Size
+    required: true
+    description: How many requests to make per each button press
+    name: burstSize
+    definition:
+      min: 1
+      max: 2048
+      default: 1
