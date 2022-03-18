@@ -70,6 +70,8 @@ local function tcp(params)
         cosock.socket.select({}, {self.sock}, _M.TIMEOUT)
         print("retrying connect")
         try(self.sock:connect(host, port))
+      elseif not success then
+        return nil, err
       end
       print("wrapping")
       self.sock = try(cosock.ssl.wrap(self.sock, params))
