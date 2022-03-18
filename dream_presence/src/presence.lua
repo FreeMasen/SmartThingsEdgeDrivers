@@ -34,28 +34,59 @@ local function creds_update_message(ip, username, password)
   }
 end
 
+local function get_name_and_current_state(device_names, client)
+  local device = device_names[client.name]
+  if device then
+    return client.name, device
+  end
+  device = device_names[client.hostname]
+  if device then
+    return client.hostname, device
+  end
+  device = device_names[client.mac]
+  if device then
+    return client.mac, device
+  end
+end
+
 local function check_states(ip, device_names, creds, event_tx)
   log.trace("check_states")
   if not (creds.xsrf and creds.cookie) then
     creds.cookie, creds.xsrf = assert(api.login(ip, creds.username, creds.password))
   end
   local sites = assert(api.get_sites(ip, creds.cookie, creds.xsrf))
+  --- A set of all client ids currently tracked indexed by client name
+  local missing_clients = {}
+  for key, dev in pairs(device_names) do
+    missing_clients[key] = dev.id
+  end
   for _, client in ipairs(sites.data) do
-    local current_state = device_names[client.name]
-      or device_names[client.hostname]
-      or device_names[client.mac]
-    if current_state ~= nil then
-      local now = cosock.socket.gettime()
-      local diff = now - client.last_seen
-      local next_state = diff < 60
-      if current_state.state ~= next_state then
-        log.debug("Sending device update ", current_state.id, next_state)
-        event_tx:send({
-          device_id = current_state.id,
-          state = next_state
-        })
-        current_state.state = next_state
-      end
+    local name, current_state = get_name_and_current_state(device_names, client)
+    if not name then
+      goto continue
+    end
+    missing_clients[name] = nil
+    local now = cosock.socket.gettime()
+    local diff = now - client.last_seen
+    local next_state = diff < 60
+    if current_state.state ~= next_state then
+      log.debug("Sending device update ", current_state.id, next_state)
+      event_tx:send({
+        device_id = current_state.id,
+        state = next_state
+      })
+      current_state.state = next_state
+    end
+    ::continue::
+  end
+  --- Set all missing devices to not present
+  for device_name, device_id in pairs(missing_clients) do
+    if device_names[device_name].state then
+      event_tx:send({
+        device_id = device_id,
+        state = false,
+      })
+      device_names[device_name].state = false
     end
   end
 end
