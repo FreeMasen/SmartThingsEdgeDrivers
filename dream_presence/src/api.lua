@@ -1,5 +1,5 @@
 local ltn12 = require 'ltn12'
-local https = require 'ssl.https'
+local https = require 'https'
 local json = require 'dkjson'
 local socket = require 'socket'
 local log = require 'log'
