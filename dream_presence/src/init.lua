@@ -12,14 +12,14 @@ local displayCapID = "honestadmin11679.targetCount"
 local display = caps[displayCapID]
 local presence = require 'presence'
 
-local PRESENT = caps.presenceSensor.presence.present()
-local NOT_PRESENT = caps.presenceSensor.presence.not_present()
+local PRESENT = caps.presenceSensor.presence.present
+local NOT_PRESENT = caps.presenceSensor.presence.not_present
 
 local TARGET_PROFILE = 'dream-presence-target.v1'
 local parentDeviceId
 
 local function device_is_parent(dev)
-  return dev and not not dev.profile.components.main.capabilities[createCapID]
+  return dev and dev:supports_capability_by_id(createCapID)
 end
 
 local function lookup_parent(driver)
@@ -61,16 +61,16 @@ local function handle_state_change(ch, driver)
   local last = device:get_latest_state('main', 'presenceSensor', 'presence')
   local event
   if state_change.state then
-    if last ~= PRESENT.value.value then
+    if last ~= PRESENT.NAME then
       event = PRESENT
     end
   else
-    if last ~= NOT_PRESENT.value.value then
-      event = caps.presenceSensor.presence.not_present()
+    if last ~= NOT_PRESENT.NAME then
+      event = NOT_PRESENT
     end
   end
   if event then
-    device:emit_event(event)
+    device:emit_event(event())
   end
 end
 
@@ -87,7 +87,7 @@ local function handle_parent_device_added(driver, device)
       log.debug(string.format("%s=> %s", child.id, current_state))
       device_names[child.preferences.clientname] = {
         id = child.id,
-        state = current_state == PRESENT.value.value,
+        state = current_state == PRESENT.NAME,
       }
     end
   end
