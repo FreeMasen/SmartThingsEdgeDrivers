@@ -93,7 +93,8 @@ local function handle_parent_device_added(driver, device)
   end
   log.debug("Spawning presence task")
   local update_tx, event_rx = presence.spawn_presence_task(
-    device.preferences.udmip, device_names, device.preferences.username, device.preferences.password
+    device.preferences.udmip, device_names, device.preferences.username,
+    device.preferences.password, device.preferences.timeout
   )
   driver.update_tx = update_tx
   log.debug("Registering state change event handler")
@@ -101,6 +102,7 @@ local function handle_parent_device_added(driver, device)
     handle_state_change(event_rx, driver)
   end, "device updates")
 end
+
 
 local function handle_child_device_added(driver, device)
   log.trace("handle_child_device_added", device.preferences.clientname or "unknown target")
@@ -145,6 +147,7 @@ local function info_changed(driver, device)
       username = device.preferences.username,
       password = device.preferences.password,
       ip = device.preferences.udmip,
+      timeout = device.preferences.timeout,
     })
     return
   end

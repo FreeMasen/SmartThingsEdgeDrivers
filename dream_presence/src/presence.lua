@@ -61,7 +61,7 @@ local function check_states(ip, device_names, creds, event_tx)
 end
 
 
-local function spawn_presence_task(ip, device_names, username, password)
+local function spawn_presence_task(ip, device_names, username, password, timeout)
   log.trace("spawn_presence_task")
   local update_tx, update_rx = cosock.channel.new()
   local event_tx, event_rx = cosock.channel.new()
@@ -71,11 +71,12 @@ local function spawn_presence_task(ip, device_names, username, password)
       xsrf = nil,
       username = username,
       password = password,
+      timeout = timeout or 5,
     }
     while true do
       log.debug("Waiting for message")
       local ready, msg, err
-      ready, err = cosock.socket.select({update_rx}, {}, 5)
+      ready, err = cosock.socket.select({update_rx}, {}, creds.timeout)
       if ready then
         msg, err = update_rx:receive()
       end
@@ -91,6 +92,7 @@ local function spawn_presence_task(ip, device_names, username, password)
           creds.password = msg.password or password
           creds.cookie = nil
           creds.xsrf = nil
+          creds.timeout = msg.timeout or 5
           ip = msg.ip or ip
         else
           log.warn("unknown message type", utils.stringify_table(msg, "msg", true))
@@ -105,7 +107,25 @@ local function spawn_presence_task(ip, device_names, username, password)
       if is_nil_or_empty_string(ip)
       or is_nil_or_empty_string(creds.username)
       or is_nil_or_empty_string(creds.password) then
-        log.warn("No ip/username/password")
+        local missing
+        if is_nil_or_empty_string(ip) then
+          missing = "ip"
+        end
+        if is_nil_or_empty_string(creds.username) then
+          if not missing then
+            missing = "username"
+          else
+            missing = missing .. "/username"
+          end
+        end
+        if is_nil_or_empty_string(creds.password) then
+          if not missing then
+            missing = "password"
+          else
+            missing = missing .. "/password"
+          end
+        end
+        log.warn(string.format("No %q", missing))
         goto continue
       end
       local s, err = pcall(function()
@@ -122,10 +142,8 @@ local function spawn_presence_task(ip, device_names, username, password)
   return update_tx, event_rx
 end
 
-
 return {
   spawn_presence_task = spawn_presence_task,
   new_client_message = new_client_message,
   creds_update_message = creds_update_message,
-  timeout_message = timeout_message,
 }
