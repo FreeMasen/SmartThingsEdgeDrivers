@@ -16,12 +16,14 @@ local CREDS_UPDATE = "credentials-update"
 ---Create a new client message table
 ---@param device_id string The device id for this client
 ---@param name string The target name provided by the preferences
+---@param state boolean If the target is currently present
 ---@return table
-local function new_client_message(device_id, name)
+local function new_client_message(device_id, name, state)
   return {
     type = NEW_CLIENT,
     device_id = device_id,
     name = name,
+    state = state,
   }
 end
 
@@ -52,9 +54,17 @@ end
 local function check_states(ip, device_names, creds, event_tx)
   log.trace("check_states")
   if not (creds.xsrf and creds.cookie) then
-    creds.cookie, creds.xsrf = assert(api.login(ip, creds.username, creds.password))
+    local cookie, xsrf = api.login(ip, creds.username, creds.password)
+    if not cookie then
+      error(string.format("Error logging in %q", xsrf))
+    end
+    creds.cookie = cookie
+    creds.xsrf = xsrf
   end
-  local sites = assert(api.get_sites(ip, creds.cookie, creds.xsrf))
+  local sites, err = api.get_sites(ip, creds.cookie, creds.xsrf)
+  if not sites then
+    error(string.format("Error getting sites %q", err))
+  end
   --- A set of all client ids currently tracked indexed by client name
   local missing_clients = {}
   for key, dev in pairs(device_names) do
@@ -166,9 +176,7 @@ local function spawn_presence_task(ip, device_names, username, password, timeout
         log.warn(string.format("No %q", missing))
         goto continue
       end
-      local s, err = pcall(function()
-        check_states(ip, device_names, creds, event_tx)
-      end)
+      local s, err = pcall(check_states, ip, device_names, creds, event_tx)
       if not s then
         log.error("Failed in presence pass", err)
       else
