@@ -22,6 +22,11 @@ local function device_is_parent(dev)
   return dev and dev:supports_capability_by_id(createCapID)
 end
 
+local function is_device_present(device)
+  local value = device:get_latest_state('main', 'presenceSensor', 'presence', NOT_PRESENT.NAME)
+  return value == PRESENT.NAME
+end
+
 local function lookup_parent(driver)
   log.debug("lookup_parent")
   if parentDeviceId and parentDeviceId ~= "" then
@@ -58,14 +63,14 @@ local function handle_state_change(ch, driver)
   log.debug(utils.stringify_table(state_change, "state_change", true))
   log.debug(string.format("%s -> %s", state_change.device_id, state_change.state))
   local device = driver:get_device_info(state_change.device_id)
-  local last = device:get_latest_state('main', 'presenceSensor', 'presence')
+  local last = is_device_present(device)
   local event
   if state_change.state then
-    if last ~= PRESENT.NAME then
+    if not last then
       event = PRESENT
     end
   else
-    if last ~= NOT_PRESENT.NAME then
+    if last then
       event = NOT_PRESENT
     end
   end
@@ -83,11 +88,11 @@ local function handle_parent_device_added(driver, device)
   local devices = driver:get_devices()
   for _, child in ipairs(devices) do
     if child.preferences.clientname and #child.preferences.clientname > 0 then
-      local current_state = device:get_latest_state('main', 'presenceSensor', 'presence')
+      local current_state = is_device_present(child)
       log.debug(string.format("%s=> %s", child.id, current_state))
       device_names[child.preferences.clientname] = {
         id = child.id,
-        state = current_state == PRESENT.NAME,
+        state = current_state,
       }
     end
   end
@@ -111,7 +116,10 @@ local function handle_child_device_added(driver, device)
       log.warn("Attempt to add child device w/o update_tx")
       return
     end
-    driver.update_tx:send(presence.new_client_message(device.id, device.preferences.clientname))
+    local initial_state = is_device_present(device)
+    driver.update_tx:send(presence.new_client_message(
+      device.id, device.preferences.clientname, initial_state
+    ))
   end
 end
 
