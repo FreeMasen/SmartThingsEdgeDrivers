@@ -1,7 +1,8 @@
 local cosock = require("cosock")
 local url    = require("socket.url")
 local ltn12  = require("ltn12")
-local http   = require("socket.http")
+local http   = require("http")
+local log = require("log")
 
 local try = cosock.socket.try
 local _M = {
@@ -10,6 +11,7 @@ local _M = {
     PORT    = 443,
     TIMEOUT =  60,
 }
+
 
 local cfg = {
   protocol = "any",
@@ -107,7 +109,7 @@ local function request(url, body)
   end
   -- New 'create' function to establish a secure connection
   url.create = tcp(url)
-  local res, code, headers, status = http.request(url)
+  local res, code, headers, status = try(http.request(url))
   if res and stringrequest then
     return table.concat(result_table), code, headers, status
   end

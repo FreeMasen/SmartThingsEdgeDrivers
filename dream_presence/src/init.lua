@@ -47,7 +47,7 @@ local function emit_target_count(driver, parentDevice)
   if not parentDevice then
     parentDevice = lookup_parent(driver)
     if not parentDevice then
-      log.warn("No parent device found")
+      log.debug("No parent device found")
       return
     end
   end
@@ -113,7 +113,7 @@ local function handle_child_device_added(driver, device)
   log.trace("handle_child_device_added", device.preferences.clientname or "unknown target")
   if device.preferences.clientname and #device.preferences.clientname > 0 then
     if not driver.update_tx then
-      log.warn("Attempt to add child device w/o update_tx")
+      log.debug("Attempt to add child device w/o update_tx")
       return
     end
     local initial_state = is_device_present(device)

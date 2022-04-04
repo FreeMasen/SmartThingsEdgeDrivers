@@ -180,7 +180,7 @@ local function spawn_presence_task(ip, device_names, username, password, timeout
       if not s then
         log.error("Failed in presence pass", err)
       else
-        log.info("Successfully checked sites")
+        log.debug("Successfully checked sites")
       end
       ::continue::
     end
