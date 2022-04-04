@@ -66,26 +66,17 @@ local function tcp(params)
     end
     function conn:connect(host, port)
       local success, err = self.sock:connect(host, port)
-      print(string.format("connected %q -> %q", success, err))
       if not success and err == "timeout" then
-        print("selecting")
         cosock.socket.select({}, {self.sock}, _M.TIMEOUT)
-        print("retrying connect")
         try(self.sock:connect(host, port))
       elseif not success then
         return nil, err
       end
-      print("wrapping")
       self.sock = try(cosock.ssl.wrap(self.sock, params))
-      print("setting sni", host)
       self.sock:sni(host)
-      print("setting timeout")
       self.sock:settimeout(_M.TIMEOUT)
-      print("doing handshake")
       try(self.sock:dohandshake())
-      print("handshook")
       reg(self)
-      print("registered")
       return 1
     end
     return conn

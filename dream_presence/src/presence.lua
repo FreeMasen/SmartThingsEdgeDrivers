@@ -134,7 +134,7 @@ local function spawn_presence_task(ip, device_names, username, password, timeout
             state = false,
             id = msg.device_id,
           }
-          dump_device_names(device_names)
+          -- dump_device_names(device_names)
         elseif msg.type == CREDS_UPDATE then
           creds.username = msg.username or username
           creds.password = msg.password or password
