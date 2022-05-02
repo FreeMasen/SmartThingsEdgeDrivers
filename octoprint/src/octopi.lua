@@ -1,6 +1,7 @@
-local http = require 'socket.http'
-local ltn12 = require 'socket.ltn12'
-local socket = require 'socket'
+local cosock = require "cosock"
+local http = cosock.asyncify 'socket.http'
+local ltn12 = require 'ltn12'
+local socket = cosock.socket
 local json = require 'dkjson'
 local log = require 'log'
 
