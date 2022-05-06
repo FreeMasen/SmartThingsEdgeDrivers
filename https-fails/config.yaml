@@ -1,0 +1,5 @@
+name: https-fails
+packageKey: https-fails
+permissions:
+  lan: {}
+  discovery: {}
