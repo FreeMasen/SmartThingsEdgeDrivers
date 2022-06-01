@@ -1,0 +1,12 @@
+dashboard:
+  states:
+    - label: '{{currentUrl.value}}'
+  actions: []
+  basicPlus: []
+detailView:
+  - label: Current URL
+    displayType: state
+    state:
+      label: '{{currentUrl.value}}'
+id: honestadmin11679.currentUrl
+version: 1

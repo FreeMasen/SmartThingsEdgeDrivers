@@ -19,9 +19,19 @@ installed `http_button` driver which will discover a single device.
 ## Getting the port
 
 The driver isn't allowed to request a port when opening a socket this means the port will
-change each time this driver is started. To determine what port you need to interact with,
-start the live logs from smartthings CLI and a log message coming from `http_button` will
-pop up every 5 seconds with the ip and port number in them.
+change each time this driver is started. To determine what port you need to interact with
+you have 3 options
+
+### The Smartthings App
+
+This driver emits a capability "Current URL" which will display the full URL for the server
+in the detail view of every button device. Simply select the device card from the app and
+it should populate.
+
+### Driver Logs
+
+Start the live logs from `smartthings` CLI and a log message coming from `http_button` will
+pop up every minute with the IP and port number in them.
 
 ```sh
 smartthings edge:drivers:logcat --hub-address=<hub-ip>
@@ -35,7 +45,9 @@ connecting... connected
 2022-06-01T19:36:12.784002782+00:00 INFO http_button  listening on http://192.168.1.6:35983
 ```
 
-Alternatively, if you are planning on interacting with this driver programmatically, you can
+### UDP Broadcast
+
+If you are planning on interacting with this driver programmatically, you can
 send a UDP broadcast message to the ip 239.255.255.250 on port 9887. In Lua that might look
 like this
 

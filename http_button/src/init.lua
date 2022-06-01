@@ -1,4 +1,3 @@
-local start = os.time()
 local capabilities = require 'st.capabilities'
 local Driver = require 'st.driver'
 local log = require 'log'
@@ -7,13 +6,24 @@ local discovery = require 'disco'
 local server = require 'server'
 local utils = require 'st.utils'
 
+local currentUrlID = "honestadmin11679.currentUrl"
+local currentUrl = capabilities[currentUrlID]
+
 -- These handlers are primarily to make the log traffic
 -- as chatty as possible
 local function device_added(driver, device)
+    local url = driver:get_url()
+    if url then
+        device:emit_event(currentUrl.currentUrl(url))
+    end
     log.trace('Added http_button ' .. device.id)
 end
 
 local function device_init(driver, device)
+    local url = driver:get_url()
+    if url then
+        device:emit_event(currentUrl.currentUrl(url))
+    end
     log.trace('Init\'d http_button ' .. device.id)
 end
 
@@ -21,8 +31,8 @@ local function device_removed(driver, device)
     log.trace('Removed http_button ' .. device.id)
 end
 
-local function info_changed(driver, device, event)
-    log.trace('Info Changed ', device.id, event)
+local function info_changed(driver, device, event, ...)
+    log.trace('Info Changed ', device.id, event, ...)
 end
 
 local driver = Driver('http_button', {
@@ -79,15 +89,7 @@ function driver:trigger_event(event, device)
     return nil, "unknown event: " .. event
 end
 
---- This will fire when the socket is read for an `accept` call
-function driver:server_tick()
-    if self.server ~= nil then
-        self.server:tick()
-    end
-end
-
---- Print the current listening IP and port number
-function driver:print_listening_message()
+function driver:get_url()
     if self.server == nil or self.server.port == nil then
         log.info('waiting for server to start')
         return
@@ -95,19 +97,36 @@ function driver:print_listening_message()
     local ip = self.server:get_ip()
     local port = self.server.port
     if ip == nil then
-        log.info(string.format('listening on port %s', port))
         return
     end
-    log.info(string.format('listening on http://%s:%s', ip, self.server.port))
+    return string.format("http://%s:%s", ip, port)
 end
 
-driver.ping_loop = driver:call_on_schedule(5, driver.print_listening_message)
+--- Print the current listening IP and port number
+function driver:print_listening_message()
+    local url = self:get_url()
+    if url then
+        log.info(string.format('listening on %s', url))
+    end
+end
+
+function driver:emit_current_url()
+    local url = self:get_url()
+    if url then
+        for i,device in ipairs(self:get_devices()) do
+            print("device", i, device)
+            device:emit_event(currentUrl.currentUrl(url))
+        end
+    else
+        self:call_with_delay(1, self.emit_current_url)
+    end
+end
+
+driver.ping_loop = driver:call_on_schedule(60, driver.print_listening_message)
+driver:call_with_delay(0, driver.emit_current_url)
 
 server(driver)
+driver:print_listening_message()
 
-local loaded = os.time()
-driver:call_with_delay(0, function()
-    print("Time to load:", loaded - start)
-end)
 driver:run()
 log.warn('Exiting http_button')

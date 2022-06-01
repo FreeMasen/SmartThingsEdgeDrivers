@@ -4,5 +4,7 @@ components:
   capabilities:
   - id: button
     version: 1
+  - id: honestadmin11679.currentUrl
+    version: 1
   categories:
   - name: RemoteController
