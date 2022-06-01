@@ -1,0 +1,8 @@
+name: http_button.v1
+components:
+- id: main
+  capabilities:
+  - id: button
+    version: 1
+  categories:
+  - name: RemoteController
