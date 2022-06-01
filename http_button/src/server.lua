@@ -65,6 +65,8 @@ return function(driver)
     local server = lux.Server.new_with(cosock.socket.tcp(), {env = 'debug'})
     --- Connect the server up to a new socket
     server:listen()
+    --- spawn a lua coroutine that will accept incomming connections and router
+    --- their http requests
     cosock.spawn(function()
         while true do
             server:tick(print)
@@ -85,7 +87,7 @@ return function(driver)
         log.debug(string.format('Responded to request %s %s in %s', req.method, req.url.path, diff_s))
     end)
 
-    -- Middleware to redirect all 404s to /index.html
+    --- Middleware to redirect all 404s to /index.html
     server:use(function(req, res, next)
         next(req, res)
         if not req.handled
@@ -107,7 +109,7 @@ return function(driver)
             if success then
                 req.body = body
             else
-                print('failed to parse json')
+                print('failed to parse json', body)
             end
         end
         next(req, res)
@@ -142,7 +144,7 @@ return function(driver)
         res:send(dkjson.encode(devices_list))
     end)
 
-    --- Quiet the 5 second print statement about the server's address
+    --- Quiet the 60 second print statement about the server's address
     server:post('/quiet', function (req, res)
         if driver.ping_loop == nil then
             res:send('Not currently printing')
@@ -192,12 +194,12 @@ return function(driver)
     ---Update a device's label
     server:post('/newlabel', function(req, res)
         if not req.body.device_id or not req.body.name then
-            req:status(400):send('Failed to parse newlabel json')
+            res:set_status(400):send('Failed to parse newlabel json')
             return
         end
-        local device = driver.get_device_info(req.body.id)
+        local device = driver:get_device_info(req.body.device_id)
         if not device then
-            req:status(404):send('Failed to update device, unknown')
+            res:set_status(404):send('Failed to update device, unknown')
             return
         end
         local suc, err = device:try_update_metadata({
@@ -206,7 +208,7 @@ return function(driver)
         if not suc then
             local msg = string.format('error sending device update %s', err)
             log.debug(msg)
-            res:status(503):send(msg)
+            res:set_status(503):send(msg)
             return
         end
         res:send(dkjson.encode({

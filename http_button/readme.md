@@ -117,14 +117,14 @@ This would indicate that there are 2 buttons we can interact with.
 #### Triggering a push event
 
 ```sh
-$ curl -X POST http://192.168.0.199:54345/action \
+$ curl -X POST http://192.168.0.199:54345/action -H "Content-Type: application/json" \
 -d "{\"device_id\": \"aaaaaaaa-bbbb-cccc-dddd-ffffffffffff\", \"action\": \"push\" }"
 ```
 
 #### Triggering a held event
 
 ```sh
-$ curl -X POST http://192.168.0.199:54345/action \
+$ curl -X POST http://192.168.0.199:54345/action -H "Content-Type: application/json" \
 -d "{\"device_id\": \"aaaaaaaa-bbbb-cccc-dddd-ffffffffffff\", \"action\": \"hold\" }"
 ```
 
@@ -137,17 +137,16 @@ to use the `/newdevice` endpoint
 
 ```sh
 curl -X POST http://192.168.0.199:54345/newdevice
-{"device_id": "baaaaaaa-bbbb-cccc-dddd-ffffffffffff", "device_name": "Button 2"}
 ```
 
 #### Updating Devices
 
-> This might not actually work very well ATM
+> This one will take a long time to sync up across the platform at the moment
 
 Once you have a few devices installed, if you wanted to change their label, you can do so with the following.
 
 ```sh
-curl -X POST http://192.168.0.199:54345/newlabel \
+curl -X POST http://192.168.0.199:54345/newlabel -H "Content-Type: application/json" \
 -d "{\"device_id\": \"aaaaaaaa-bbbb-cccc-dddd-ffffffffffff\", \"name\": \"Party Button!!!\" }""
 ```
 

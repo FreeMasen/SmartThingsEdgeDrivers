@@ -48,14 +48,14 @@ local driver = Driver('http_button', {
 --- Handler for the `push` event
 ---@param device Device
 function driver:push(device)
-    device:emit_event(capabilities.button.button.pushed({state_change = true}))
+    device:emit_event(capabilities.button.button.pushed())
     log.debug('http_button '.. device.id .. ' pushed')
 end
 
 --- Handler for the `held` event
 ---@param device Device
 function driver:hold(device)
-    device:emit_event(capabilities.button.button.held({state_change = true}))
+    device:emit_event(capabilities.button.button.held())
     log.debug('http_button '.. device.id .. ' held')
 end
 
