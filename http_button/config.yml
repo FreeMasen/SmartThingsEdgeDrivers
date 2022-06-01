@@ -1,0 +1,5 @@
+name: 'http_button'
+packageKey: 'http_button'
+permissions:
+  lan: {}
+  discovery: {}
