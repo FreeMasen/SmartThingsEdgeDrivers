@@ -160,7 +160,7 @@ return function(driver)
         local device_name, device_id, err_msg = discovery.add_device(driver)
         if err_msg ~= nil then
             log.error('error creating new device ' .. err_msg)
-            res:status(503):send('Failed to add new device')
+            res:set_status(503):send('Failed to add new device')
             return
         end
         res:send(dkjson.encode({
@@ -172,12 +172,12 @@ return function(driver)
     --- Handle the `push` and `held` events for a button
     server:post('/action', function(req, res)
         if not req.body.device_id or not req.body.action then
-            res:status(400):send('bad request')
+            res:set_status(400):send('bad request')
             return
         end
         local device = driver:get_device_info(req.body.device_id)
         if not device then
-            res:status(404):send('device not found')
+            res:set_status(404):send('device not found')
             return
         end
         if req.body.action == 'push' then
@@ -185,10 +185,10 @@ return function(driver)
         elseif req.body.action == 'hold' then
             driver:hold(device)
         else
-            res:status(404):send('unknown action')
+            res:set_status(404):send('unknown action')
             return
         end
-        res:send(dkjson.encode(req.body))
+        res:send(req.raw_body)
     end)
 
     ---Update a device's label
