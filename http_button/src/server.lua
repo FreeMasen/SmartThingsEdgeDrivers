@@ -84,7 +84,7 @@ return function(driver)
         else
             diff_s = string.format("%.01fms", diff * 1000)
         end
-        log.debug(string.format('Responded to request %s %s in %s', req.method, req.url.path, diff_s))
+        log.debug(string.format('Responded %s to request %s %s in %s', res.status, req.method, req.url.path, diff_s))
     end)
 
     --- Middleware to redirect all 404s to /index.html
