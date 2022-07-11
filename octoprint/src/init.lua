@@ -101,7 +101,7 @@ local function start_poll(driver, device, octopi)
     cosock.spawn(function()
         while driver.device_poll_handles[device.id] do
             check_state(device, octopi)
-            cosock.socket.sleep(1)
+            cosock.socket.sleep(5)
         end
     end, poll_name)
 end
@@ -110,7 +110,7 @@ end
 ---@param driver Driver
 ---@param device Device
 local function device_added(driver, device)
-    log.debug('device_added', utils.stringify_table(device))
+    log.debug('device_added')
     local api_key = device:get_field('api_key')
     local printer_url = device:get_field('printer_url')
     log.debug(utils.stringify_table({api_key =  api_key, printer_url = printer_url}, 'persistent', true))
@@ -135,8 +135,10 @@ local function device_added(driver, device)
     )
     device:set_field('octopi', octopi)
     local s, e = assert(octopi:gain_authorization())
+    log.debug("authorized?", s, e)
     if type(s) == 'string' then
         device:set_field('api_key', s, {persist = true})
+        driver.datastore:save()
     else
         log.debug('bad api key from gain_authorization', e or utils.stringify_table(s, 'api_key', true))
     end

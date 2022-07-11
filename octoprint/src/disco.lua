@@ -1,6 +1,6 @@
 local socket = require 'socket'
 local http = require 'socket.http'
-local json = require 'dkjson'
+local json = require 'st.json'
 local log = require 'log'
 local xml_parse = require 'xml_parse'
 local utils = require 'st.utils'
@@ -118,6 +118,7 @@ end
 ---@param cont function function to check if discovery should continue
 local function disco_handler(driver, opts, cont)
     driver.datastore.urls = driver.datastore.urls or {}
+    driver.datastore.printers = driver.datastore.printers or {}
     local known_devices = {}
     local devices_list = driver:get_devices()
     local new_num = #devices_list
@@ -136,6 +137,7 @@ local function disco_handler(driver, opts, cont)
             else
                 known_devices[device.id] = true
             end
+            
             driver.datastore.printers[device.id] = device
             new_num = new_num + 1
         end

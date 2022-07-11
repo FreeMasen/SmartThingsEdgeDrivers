@@ -2,7 +2,7 @@ local cosock = require "cosock"
 local http = cosock.asyncify 'socket.http'
 local ltn12 = require 'ltn12'
 local socket = cosock.socket
-local json = require 'dkjson'
+local json = require 'st.json'
 local log = require 'log'
 
 ---@class TemperatureInfo
