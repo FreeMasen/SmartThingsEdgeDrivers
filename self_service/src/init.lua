@@ -47,10 +47,10 @@ local function disco(driver, opts, cont)
 end
 
 local function make_request()
-  log.info('requesting hello world')
+  log.info(cosock.socket.gettime(), 'requesting hello world')
   if not server.port then return log.debug("server not yet listening") end
   local body, code, headers, msg = assert(http.request(string.format("http://%s:%s", server:get_ip(), server.port)))
-  log.info('response', code, body)
+  log.info(cosock.socket.gettime(), 'response', code, body)
 end
 
 local function emit_state(driver, device)
@@ -61,9 +61,6 @@ end
 
 local function init(driver, device)
   emit_state(driver, device)
-  device.thread:call_on_schedule(300, function()
-    make_request()
-  end, "requestor")
 end
 
 local driver = Driver('Self Service', {
@@ -93,14 +90,6 @@ cosock.spawn(function()
     server:tick(log.error)
   end
 end, "server run loop")
-
-driver:call_on_schedule(5, function(driver)
-  local ip = server:get_ip()
-  if ip == nil or server.port == nil then
-    return
-  end
-  log.debug(string.format('http://%s:%s', ip, server.port))
-end)
 
 server:get('/', function(req, res)
   res:send('hello world')
