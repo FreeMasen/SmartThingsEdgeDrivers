@@ -92,7 +92,15 @@ cosock.spawn(function()
 end, "server run loop")
 
 server:get('/', function(req, res)
-  res:send('hello world')
+  local sent = 0
+  for i = 1, 1024 * 1024 do
+    res:send(string.rep("a", 1024))
+    sent = sent + 1024
+    if i % 10000 then
+      print("sent:", sent)
+    end
+    cosock.socket.sleep(0.01)
+  end
 end)
 
 driver:run()
