@@ -22,6 +22,21 @@ local function disco(driver, opts, cont)
   end
 end
 
+function make_sse_req(ip)
+  local EventSource = require "lunchbox.sse.eventsource"
+  local url = string.format("https://%s:3030/sse", ip)
+  local eventsource = EventSource.new(
+                            url,
+                            nil
+                          )
+
+  eventsource.onmessage = function(msg)
+    if msg and msg.data then
+      print(utils.stringify_table(json.decode(msg.data) or {}, "msg-data", true))
+    end
+  end
+end
+
 function _req(http, device)
   print("prefs:", utils.stringify_table(device.preferences, "prefs", true))
   local ip_addr = device.preferences.ipAddr
@@ -92,7 +107,7 @@ function make_request2(device)
   if not (type(ip_addr) == "string" and #ip_addr > 0) then
     return log.warn("No ipAddr in preferences")
   end
-  return make_manual_request(ip_addr)
+  return make_sse_req(ip_addr)
 end
 
 local is_two = true
