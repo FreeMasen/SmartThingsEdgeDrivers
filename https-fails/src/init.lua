@@ -23,19 +23,61 @@ local function disco(driver, opts, cont)
 end
 
 function _req(http, device)
+  print("prefs:", utils.stringify_table(device.preferences, "prefs", true))
   local ip_addr = device.preferences.ipAddr
-  if not (type(ip_addr) == "string" and #ip_addr) then
+  if not (type(ip_addr) == "string" and #ip_addr > 0) then
     return log.warn("No ipAddr in preferences")
   end
+  local url = string.format("https://%s:3030", ip_addr)
+  print("requesting GET", url)
   local response, status, headers, status_msg = 
-   http.request(string.format("https://%s", ip_addr))
+   http.request(url)
   if status == 200 then
     return log.info("Success!")
   end
   log.debug(string.format("Status: %q - %q", status, status_msg))
-  log.debug(utils.stringify_table(headers, "Headers", true))
+  log.debug(utils.stringify_table(headers or {}, "Headers", true))
   if type(response) == "string" and #response > 0 then
     print("Response: %q", response)
+  end
+end
+
+function _make_manual_request(sock, ip)
+  local Request = require "luncheon.request"
+  local Response = require "luncheon.response"
+  local lunch_utils = require "luncheon.utils"
+  local req = Request.new("GET", string.format("https://%s:3030/", ip), nil)
+    :add_header("host", ip .. ":3030")
+    :add_header("connection", "keep-alive")
+    -- :add_header("keep-alive", "timeout=600")
+    :add_header("accept", "*/*")
+    :add_header("content-length", "0")
+  print(utils.stringify_table(req, "req", true))
+  local msg = req:serialize()
+  print(msg)
+  local ct = assert(sock:send(msg))
+  assert(ct == #msg)
+  local res = Response.source(function(...) return sock:receive(...) end)
+  print(res:get_body())
+  print(utils.stringify_table(res or {}, "res", true))
+end
+
+
+function make_manual_request(ip)
+  local cosock = require "cosock"
+  local ssl = require "cosock.ssl"
+  local sock = assert(cosock.socket.tcp())
+  sock:settimeout(3)
+  local _, err = sock:connect(ip, 3030)
+  sock = assert(ssl.wrap(sock, {mode = "client", protocol = "any", verify = "none", options = "all"}))
+  assert(sock:dohandshake())
+  local _sock_close = sock.close
+  sock.close = function(self, ...)
+    print("closing", debug.traceback())
+    _sock_close()
+  end
+  for i=1, 10 do
+    _make_manual_request(sock, ip)
   end
 end
 
@@ -46,9 +88,14 @@ end
 
 function make_request2(device)
   log.trace("make_request2")
-  _req(socket.asyncify "ssl.https", device)
+  local ip_addr = device.preferences.ipAddr
+  if not (type(ip_addr) == "string" and #ip_addr > 0) then
+    return log.warn("No ipAddr in preferences")
+  end
+  return make_manual_request(ip_addr)
 end
-local is_two = false
+
+local is_two = true
 function emit_state(driver, device)
   log.debug('Emitting state')
   device:emit_event(capabilities.switch.switch.off())
