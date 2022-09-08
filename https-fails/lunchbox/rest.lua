@@ -40,14 +40,14 @@ local function backoff_builder(max, inc, rand)
 end
 
 local function connect(client)
-  local port = client.base_url.port or 80
+  local port = 80
   local use_ssl = false
 
   if client.base_url.scheme == "https" then
-    port = port or 443
+    port = 443
     use_ssl = true
   end
-  print(require("st.utils").stringify_table(client.base_url, "base_url", true))
+
   client.socket = client.socket_builder(client.base_url.host, port, use_ssl)
 end
 
@@ -137,7 +137,7 @@ end
 
 local function handle_response(sock)
   -- called select right before passing in so we receive immediately
-  local initial_recv, initial_err, partial = Response.tcp_source(sock)
+  local initial_recv, initial_err, partial = Response.source(function() return sock:receive('*l') end)
 
   local full_response = nil
 
@@ -282,12 +282,9 @@ end
 function RestClient:get(path, additional_headers, retry_fn)
   local request = Request.new("GET", path, nil):add_header(
                     "user-agent", "smartthings-lua-edge-driver"
-                  )
-                  :add_header("host", string.format("%s", self.base_url.host))
-                  :add_header(
+                  ):add_header("host", string.format("%s", self.base_url.host)):add_header(
                     "connection", "keep-alive"
                   )
-                  :add_header("content-length", "0")
 
   if additional_headers ~= nil and type(additional_headers) == "table" then
     for k, v in pairs(additional_headers) do request = request:add_header(k, v) end

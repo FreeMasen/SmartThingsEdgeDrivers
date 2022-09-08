@@ -45,6 +45,29 @@ EventSource.EventTypes = util.read_only {
     ON_ERROR = "error",
 }
 
+function EventSource:__gc()
+    print("GCing EventSource")
+end
+local function dbg(prefix, ...)
+    print(prefix, ...)
+    return ...
+end
+
+local function event_source_source(sock)
+    return function(encoding)
+        print(string.format("event_source_source %q", encoding))
+        if encoding == "chunked" then
+            local len = assert(sock:receive(1))
+            assert(sock:receive("*l"))
+            local len = math.tointeger(len)
+            local ret = table.pack(sock:receive(len))
+            assert(sock:receive("*l"))
+            return dbg("chunked source chunk:", table.unpack(ret))
+        end
+        return sock:receive("*l")
+    end
+end
+
 --- Helper function that creates the initial Request to start the stream.
 --- @function create_request
 --- @local
@@ -66,12 +89,20 @@ local function create_request(url_table, extra_headers)
     return request
 end
 
+local function _sock_close(sock, ...)
+    print("CLOSING!!!", debug.traceback())
+    socket.tcp.close(sock, ...)
+end
+
 --- Helper function to send the request and kick off the stream.
 --- @function send_stream_start_request
 --- @local
 --- @param payload string the entire string buffer to send
 --- @param sock table the TCP socket to send it over
 local function send_stream_start_request(payload, sock)
+    if sock.close ~= _sock_close then
+        sock.close = _sock_close
+    end
     local bytes, err, idx = nil, nil, 0
 
     repeat
@@ -142,8 +173,11 @@ local valid_fields = util.read_only {
 --- @param recv string the received payload from the last socket receive
 local function parse(source, recv)
     for line in util.iter_string_lines(recv) do
+        print(string.format("line: %q", line))
         if #line == 0 or (not line:match("([%w%p]+)")) then -- empty/blank lines indicate dispatch
+            print("dispatching")
             dispatch_event(source)
+            print("dispatched")
         else
             if line:sub(1,1) ~= ":" then -- ignore any lines that start w/ a colon
                 local matches = line:gmatch("(%w*)(:*)(.*)") -- colon is optional, in that case it's a field w/ no value
@@ -217,7 +251,12 @@ local function connecting_action(source)
     end
     
     local recv, partial = nil, nil
-    recv, err, partial = Response.source(function() return source._sock:receive() end)
+    local stream = event_source_source(source._sock)
+    local encoding
+    recv, err, partial = Response.source(function()
+        return stream(encoding)
+    end)
+    source._stream = stream
 
     if err ~= nil then
         log.error("start stream receive error" .. err)
@@ -227,7 +266,7 @@ local function connecting_action(source)
     if recv.status ~= 200 then
         return nil, "Server responded with status other than 200 OK", recv
     end
-
+    source._encoding = recv:get_headers():get_one("Transfer-Encoding")
     source.ready_state = EventSource.ReadyStates.OPEN
 
     if type(source.onopen) == "function" then
@@ -246,24 +285,28 @@ end
 --- @local
 --- @param source EventSource
 local function open_action(source)
-    local recv, err, partial = source._sock:receive('*l')
-
+    print("open_action")
+    local recv, err, partial = source._stream(source._encoding)
+    
+    print(string.format("initial %q %q %q", recv, err, partial))
     if err then
-        log.warn("Event source error: " .. err)
+        print("Event source error: " .. err)
         source._sock:close()
         source._sock = nil
         source.ready_state = EventSource.ReadyStates.CLOSED
         return nil, err, partial
     end
+    parse(source, recv)
+    -- local recv_as_num = tonumber(recv, 16)
+    -- print(string.format("recving %q", recv_as_num))
+    -- if recv_as_num ~= nil then
+    --     recv, err, partial = source._sock:receive(recv_as_num)
+    --     print("message", recv, err, partial)
+    --     _ = source._sock:receive('*l') -- clear trailing crlf
 
-    local recv_as_num = tonumber(recv, 16)
+    --     parse(source, recv)
+    -- end
 
-    if recv_as_num ~= nil then
-        recv, err, partial = source._sock:receive(recv_as_num)
-        _ = source._sock:receive('*l') -- clear trailing crlf
-
-        parse(source, recv)
-    end
 end
 
 --- Helper function that captures the cyclic logic of the EventSource while in the CLOSED state.
@@ -342,9 +385,11 @@ function EventSource.new(url, extra_headers, sock_builder)
 
     cosock.spawn(function()
         while true do
+            print("EventSource tick", source.ready_state)
             state_actions[source.ready_state](source)
             -- socket.sleep(1)
         end
+        print("exiting EventSource loop")
     end)
 
     return source
@@ -352,6 +397,7 @@ end
 
 --- Close the event source, signalling that a reconnect is not desired
 function EventSource:close()
+    print("closing event source")
     self._reconnect = false
     self._sock:close()
     self._sock = nil

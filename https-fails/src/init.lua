@@ -33,8 +33,22 @@ function make_sse_req(ip)
   eventsource.onmessage = function(msg)
     if msg and msg.data then
       print(utils.stringify_table(json.decode(msg.data) or {}, "msg-data", true))
+    else
+      print("msg with no data")
     end
   end
+end
+
+function make_lunchbox_req(ip)
+  local Client = require "lunchbox.rest"
+  local client = Client.new(string.format("https://%s:3030", ip))
+  for i=1,10 do
+    print("req", i)
+    local res = assert(client:get(string.format("/%s", i)), {["keep-alive"] = "timeout=600", ["accept-encoding"] = "chunked"})
+    local body = assert(res:get_body())
+    print(body)
+  end
+
 end
 
 function _req(http, device)
@@ -107,7 +121,7 @@ function make_request2(device)
   if not (type(ip_addr) == "string" and #ip_addr > 0) then
     return log.warn("No ipAddr in preferences")
   end
-  return make_sse_req(ip_addr)
+  return make_lunchbox_req(ip_addr)
 end
 
 local is_two = true
@@ -127,8 +141,6 @@ end
 local driver = Driver('https-fails', {
   discovery = disco,
   lifecycle_handlers = {
-    init = emit_state,
-    added = emit_state,
     deleted = function() log.debug("device deleted") end,
   },
   driver_lifecycle = function()

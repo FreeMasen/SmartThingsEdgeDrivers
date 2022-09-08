@@ -43,11 +43,4 @@ util.copy_data = function(tbl)
   return ret
 end
 
-function util.response_source(sock)
-  local state = "initial"
-  return function()
-    
-  end
-end
-
 return util
