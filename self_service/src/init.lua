@@ -1,33 +1,9 @@
 
 local Driver = require 'st.driver'
 local log = require 'log'
-local utils = require 'st.utils'
 local json = require 'dkjson'
 local capabilities = require 'st.capabilities'
 local cosock = require 'cosock'
-local http = cosock.asyncify("socket.http")
-local lux = require("luxure")
-
-local server = lux.Server.new_with(cosock.socket.tcp(), { env = 'debug' })
-
-local function find_hub_ip(driver)
-  if driver.environment_info.hub_ipv4 then
-      return driver.environment_info.hub_ipv4
-  end
-  local s = cosock:udp()
-  -- The IP address here doesn't seem to matter so long as its
-  -- isn't '*'
-  s:setpeername('192.168.0.0', 0)
-  local localip, _, _ = s:getsockname()
-  return localip
-end
-
-server.get_ip = function(self)
-  if self.ip == nil or self.ip == '0.0.0.0' then
-    self.ip = find_hub_ip(driver)
-  end
-  return self.ip
-end
 
 local function disco(driver, opts, cont)
   print('starting disco', cont)
@@ -46,22 +22,46 @@ local function disco(driver, opts, cont)
   end
 end
 
-local function make_request()
-  log.info(cosock.socket.gettime(), 'requesting hello world')
-  if not server.port then return log.debug("server not yet listening") end
-  local body, code, headers, msg = assert(http.request(string.format("http://%s:%s", server:get_ip(), server.port)))
-  log.info(cosock.socket.gettime(), 'response', code, body)
+local function long_lived_sockets()
+  local server = cosock.socket.tcp()
+  server:bind("0.0.0.0", 0)
+  server:listen(0)
+  local ip, port = server:getsockname()
+  cosock.spawn(function()
+    while true do
+      local client = assert(server:accept())
+      while true do
+        local bytes, err, partial = client:receive()
+        if not bytes then
+          print(err, partial)
+          break
+        end
+        local ct = tonumber(string.sub(bytes, 1, 1))
+        print("C BYTES:", string.sub(bytes, 1, 1), #bytes)
+        cosock.socket.sleep(ct / 2)
+        client:send(string.format("%s\n", bytes))
+      end
+    end
+  end)
+  local client = cosock.socket.tcp()
+  client:connect(ip, port)
+  for i=1,10 do
+    client:send(string.format("%s\n", string.rep(tostring(i-1), 128 * i)))
+    local bytes = assert(client:receive())
+    print("C BYTES:", string.sub(bytes, 1, 1), #bytes)
+  end
 end
 
 local function emit_state(driver, device)
   log.debug('Emitting state')
   device:emit_event(capabilities.switch.switch.off())
-  make_request()
+  long_lived_sockets()
 end
 
 local function init(driver, device)
-  emit_state(driver, device)
+  -- emit_state(driver, device)
 end
+
 
 local driver = Driver('Self Service', {
   discovery = disco,
@@ -82,25 +82,5 @@ local driver = Driver('Self Service', {
     }
 }
 })
-
-server:listen()
-
-cosock.spawn(function()
-  while true do
-    server:tick(log.error)
-  end
-end, "server run loop")
-
-server:get('/', function(req, res)
-  local sent = 0
-  for i = 1, 1024 * 1024 do
-    res:send(string.rep("a", 1024))
-    sent = sent + 1024
-    if i % 10000 then
-      print("sent:", sent)
-    end
-    cosock.socket.sleep(0.01)
-  end
-end)
 
 driver:run()
