@@ -25,13 +25,24 @@ end
 local function long_lived_sockets()
   local server = cosock.socket.tcp()
   server:bind("0.0.0.0", 0)
-  server:listen(0)
+  server:listen()
+  local params = {
+    mode = "server",
+    protocol = "any",
+    certificate = "certs/cert.pem",
+    key = "certs/key.pem",
+    verify = {"none"},
+    options = {"all", "no_sslv3"}
+  }
+
   local ip, port = server:getsockname()
   cosock.spawn(function()
     while true do
       local client = assert(server:accept())
+      local tls = assert(cosock.ssl.wrap(client, params))
+      tls:dohandshake()
       while true do
-        local bytes, err, partial = client:receive()
+        local bytes, err, partial = tls:receive()
         if not bytes then
           print(err, partial)
           break
@@ -39,15 +50,24 @@ local function long_lived_sockets()
         local ct = tonumber(string.sub(bytes, 1, 1))
         print("C BYTES:", string.sub(bytes, 1, 1), #bytes)
         cosock.socket.sleep(ct / 2)
-        client:send(string.format("%s\n", bytes))
+        tls:send(string.format("%s\n", bytes))
       end
     end
   end)
   local client = cosock.socket.tcp()
   client:connect(ip, port)
+  print("wrapping client")
+  local tls = assert(cosock.ssl.wrap(client, {
+    mode = "client",
+    protocol = "any",
+    verify = {"none"},
+    options = {"all", "no_sslv3"}
+  }))
+  print("wrapped client")
+  tls:dohandshake()
   for i=1,10 do
-    client:send(string.format("%s\n", string.rep(tostring(i-1), 128 * i)))
-    local bytes = assert(client:receive())
+    tls:send(string.format("%s\n", string.rep(tostring(i-1), 128 * i)))
+    local bytes = assert(tls:receive())
     print("C BYTES:", string.sub(bytes, 1, 1), #bytes)
   end
 end
