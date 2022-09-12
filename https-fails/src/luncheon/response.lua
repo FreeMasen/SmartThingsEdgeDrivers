@@ -154,6 +154,34 @@ function Response:get_content_length()
     return self._content_length
 end
 
+function Response:get_content_encoding()
+    if not self._parsed_headers then
+        self:_fill_headers()
+    end
+    if self._encoding == nil then
+        local unsupported = false
+        local encodings = self.headers:get_all("transfer_encoding")
+        for _,value in ipairs(encodings) do
+            if value == "compress"
+            or value == "deflate"
+            or value == "gzip"
+            then
+                unsupported = true
+            end
+            if value == "chunked" then
+                self._encoding = value
+            end
+        end
+        if unsupported then
+            self._encoding = string.format("unsupported(%s)", table.concat(encodings, ","))
+        end
+    end
+    if string.match(self._encoding, "unsupported") then
+        return nil, self._encoding
+    end
+    return self._encoding
+end
+
 ---Get the next line from an incoming request, checking first
 ---if we have reached the end of the content
 ---@return string|nil
@@ -172,6 +200,16 @@ function Response:_fill_body()
     local len, err = self:get_content_length()
     if err ~= nil then
         return err
+    end
+    if not len then
+        local enc
+        enc, err = self:get_content_encoding()
+        if self.socket and enc == "chunked" then
+            self.source = utils.chunk_encoding_source(self.socket)
+            while true do
+                
+            end
+        end
     end
     len = len or '*a'
     local body, err = self._source(len)

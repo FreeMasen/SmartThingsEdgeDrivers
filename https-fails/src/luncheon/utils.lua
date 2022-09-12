@@ -57,6 +57,40 @@ function m.tcp_socket_source(socket)
     end
 end
 
+function m.chunk_encoding_source(socket)
+    return function()
+        local _, next_length, chunk, err
+        next_length, err = socket:receive(1)
+        if not next_length then
+            return nil, err
+        end
+        next_length = tonumber(next_length, 16)
+        if not next_length then
+            return nil, "invalid chunk encoding"
+        end
+        if next_length == 0 then
+            -- clear final new line
+            socket:receive("*l")
+            return "", "end"
+        end
+        --clear newlines
+        _, err = socket:receive("*l")
+        if err then
+            return nil, err, next_length
+        end
+        chunk, err = socket:receive(next_length)
+        
+        if not chunk then
+            return nil, err
+        end
+        _, err = socket:receive("*l")
+        if err then
+            return ni, err
+        end
+        return chunk
+    end
+end
+
 ---Get the first line from a chunk, discarding the new line characters, returning
 ---the line followed by the remainder of the chunk after that line
 ---@param chunk string

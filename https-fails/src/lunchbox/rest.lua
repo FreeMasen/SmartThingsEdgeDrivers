@@ -78,7 +78,7 @@ local function parse_chunked_response(original_response, sock)
 
   for header in original_response.headers:iter() do full_response.headers:append_chunk(header) end
 
-  local next_chunk_bytes = tonumber(original_response:get_body(), 16)
+  local next_chunk_bytes = tonumber(original_response:next_line(), 16)
   local next_chunk_body = ""
   local bytes_read = 0;
 

@@ -38,15 +38,18 @@ function make_sse_req(ip)
     end
   end
 end
-
+local function dbg(prefix, ...)
+  return ...
+end
 function make_lunchbox_req(ip)
   local Client = require "lunchbox.rest"
-  local client = Client.new(string.format("https://%s:3030", ip))
-  for i=1,10 do
+  local client = Client.new(string.format("https://%s:443", ip))
+  for i=1,100 do
     print("req", i)
-    local res = assert(client:get(string.format("/%s", i)), {["keep-alive"] = "timeout=600", ["accept-encoding"] = "chunked"})
-    local body = assert(res:get_body())
-    print(body)
+    
+    local res = assert(dbg("res:", client:get(string.format("/%s", i)), {["keep-alive"] = "timeout=600", ["accept-encoding"] = "chunked"}))
+    local body = assert(dbg("body:", res:get_body()))
+    socket.socket.sleep(2)
   end
 
 end
@@ -75,8 +78,8 @@ function _make_manual_request(sock, ip)
   local Request = require "luncheon.request"
   local Response = require "luncheon.response"
   local lunch_utils = require "luncheon.utils"
-  local req = Request.new("GET", string.format("https://%s:3030/", ip), nil)
-    :add_header("host", ip .. ":3030")
+  local req = Request.new("GET", string.format("https://%s:443/", ip), nil)
+    :add_header("host", ip .. ":443")
     :add_header("connection", "keep-alive")
     -- :add_header("keep-alive", "timeout=600")
     :add_header("accept", "*/*")
@@ -97,7 +100,7 @@ function make_manual_request(ip)
   local ssl = require "cosock.ssl"
   local sock = assert(cosock.socket.tcp())
   sock:settimeout(3)
-  local _, err = sock:connect(ip, 3030)
+  local _, err = sock:connect(ip, 443)
   sock = assert(ssl.wrap(sock, {mode = "client", protocol = "any", verify = "none", options = "all"}))
   assert(sock:dohandshake())
   local _sock_close = sock.close
