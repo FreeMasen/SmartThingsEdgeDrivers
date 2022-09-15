@@ -21,8 +21,9 @@ local function disco(driver, opts, cont)
     assert(driver.device_api.create_device(device_info_json))
   end
 end
-
+local evsrc
 function make_sse_req(ip)
+  print("make sse request")
   local EventSource = require "lunchbox.sse.eventsource"
   local url = string.format("https://%s:443/sse", ip)
   local eventsource = EventSource.new(
@@ -37,6 +38,7 @@ function make_sse_req(ip)
       print("msg with no data")
     end
   end
+  evsrc = eventsource
 end
 local function dbg(prefix, ...)
   print(prefix, ...)
