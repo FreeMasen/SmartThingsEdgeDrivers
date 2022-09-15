@@ -24,7 +24,7 @@ end
 
 function make_sse_req(ip)
   local EventSource = require "lunchbox.sse.eventsource"
-  local url = string.format("https://%s:3030/sse", ip)
+  local url = string.format("https://%s:443/sse", ip)
   local eventsource = EventSource.new(
                             url,
                             nil
@@ -39,12 +39,16 @@ function make_sse_req(ip)
   end
 end
 local function dbg(prefix, ...)
+  print(prefix, ...)
   return ...
 end
 function make_lunchbox_req(ip)
   local Client = require "lunchbox.rest"
-  local client = Client.new(string.format("https://%s:443", ip))
-  for i=1,100 do
+    local client = Client.new(string.format("https://%s:443", ip))
+  cosock.spawn(function()
+    make_sse_req(ip)
+  end)
+  for i=1,10 do
     print("req", i)
     
     local res = assert(dbg("res:", client:get(string.format("/%s", i)), {["keep-alive"] = "timeout=600", ["accept-encoding"] = "chunked"}))
@@ -127,17 +131,13 @@ function make_request2(device)
   return make_lunchbox_req(ip_addr)
 end
 
-local is_two = true
 function emit_state(driver, device)
   log.debug('Emitting state')
   device:emit_event(capabilities.switch.switch.off())
-  local req = make_request
-  if is_two then
-    req = make_request2
-  end
   is_two = not is_two
   socket.spawn(function()
-    req(device)
+    make_request2(device)
+
   end)
 end
 
