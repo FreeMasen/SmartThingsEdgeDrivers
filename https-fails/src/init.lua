@@ -28,7 +28,7 @@ function make_sse_req(ip)
   local url = string.format("https://%s:443/sse", ip)
   local eventsource = EventSource.new(
                             url,
-                            nil
+                            nil, nil
                           )
 
   eventsource.onmessage = function(msg)
@@ -130,7 +130,9 @@ function make_request2(device)
   if not (type(ip_addr) == "string" and #ip_addr > 0) then
     return log.warn("No ipAddr in preferences")
   end
-  return make_lunchbox_req(ip_addr)
+  socket.spawn(function()
+    make_lunchbox_req(ip_addr)
+  end)
 end
 
 function emit_state(driver, device)
