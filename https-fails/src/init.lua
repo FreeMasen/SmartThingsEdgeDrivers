@@ -45,7 +45,7 @@ end
 function make_lunchbox_req(ip)
   local Client = require "lunchbox.rest"
     local client = Client.new(string.format("https://%s:443", ip))
-  cosock.spawn(function()
+  socket.spawn(function()
     make_sse_req(ip)
   end)
   for i=1,10 do
