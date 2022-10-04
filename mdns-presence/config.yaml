@@ -1,0 +1,5 @@
+name: mdns-presence
+packageKey: mdns-presence
+permissions:
+  lan: {}
+  discovery: {}
