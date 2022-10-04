@@ -1,0 +1,10 @@
+id: honestadmin11679.targetcreate
+version: 1
+status: proposed
+name: targetcreate
+ephemeral: false
+attributes: {}
+commands:
+  create:
+    name: create
+    arguments: []

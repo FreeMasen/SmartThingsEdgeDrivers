@@ -1,0 +1,18 @@
+id: honestadmin11679.targetcount
+version: 1
+status: proposed
+name: Target Count
+attributes:
+  targetCount:
+    schema:
+      type: object
+      properties:
+        value:
+          type: integer
+          minimum: 0
+          maximum: 1000
+      additionalProperties: false
+      required:
+        - value
+    enumCommands: []
+commands: {}
