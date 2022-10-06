@@ -71,6 +71,42 @@ local function emit_state(driver, device)
   log.debug('Emitting state')
 end
 
+local function interface_task_tick(driver, dev_rx)
+  local ev, err = dev_rx:receive()
+  if not ev then
+    return log.error("Error in dev_rx:receive", err)
+  end
+  log.trace("task sent message")
+  if (ev or {}).kind == "presence-change" then
+    log.debug(ev.kind, ev.id, ev.is_present)
+    local device = driver:get_device_info(ev.id)
+    if not device then
+      return log.error("Unknown device id", ev.id)
+    end
+    local event_ctor
+    if ev.is_present then
+      event_ctor = caps.presenceSensor.presence.present
+    else
+      event_ctor = caps.presenceSensor.presence.not_present
+    end
+    device:emit_event(event_ctor())
+  else
+    -- log.debug("Unknown event", utils.stringify_table(ev, "Event", true))
+  end
+end
+
+local function spawn_presence_interface_task(driver, dev_rx)
+  -- driver:register_channel_handler(dev_rx, function()
+  --   interface_task_tick(driver, dev_rx)
+  -- end)
+  cosock.spawn(function()
+      while true do
+          interface_task_tick(driver, dev_rx)
+      end
+    end)
+
+end
+
 local function init(driver, device)
   if device_is_parent(device) then
     parentDeviceId = device.id
@@ -84,7 +120,7 @@ local function init(driver, device)
     local task_devs = {}
     for _, child in ipairs(devices) do
       if child.preferences.clientname and #child.preferences.clientname > 0 then
-        task_devs[child.preference.clientname] = {
+        task_devs[child.preferences.clientname] = {
           last_seen = nil,
           id = child.id
         }
@@ -95,16 +131,7 @@ local function init(driver, device)
       timeout = (device.preference or {}).timeout or 5,
       away_trigger = (device.preferences or {}).awayTrigger or 60,
     }, dev_tx, task_rx)
-    driver:register_channel_handler(dev_rx, function()
-      log.trace("task sent message")
-      local ev, err = dev_rx:receive()
-      if not ev then
-        return log.error("Error in dev_rx:receive", err)
-      end
-      if ev and ev.kind == "presence-change" then
-        log.debug(ev.kind, ev.id, ev.is_present)
-      end
-    end)
+    spawn_presence_interface_task(driver, dev_rx)
     emit_target_count(driver, device)
   else
     local prefs = device.preference or {}
