@@ -1,0 +1,5 @@
+name: rch-fails
+packageKey: rch-fails
+permissions:
+  lan: {}
+  discovery: {}

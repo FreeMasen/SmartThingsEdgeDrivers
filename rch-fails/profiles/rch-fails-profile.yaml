@@ -1,0 +1,17 @@
+name: rch-fails.v1
+components:
+  - id: main
+    capabilities:
+    - id: switch
+      version: 1
+preferences:
+  - preferenceType: string
+    title: Ip Address
+    required: true
+    description: The IP address & port of an https server
+    name: ipAddr
+    definition:
+      minLength: 0
+      maxLength: 20
+      stringType: text
+      default: ''
