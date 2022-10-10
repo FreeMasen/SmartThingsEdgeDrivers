@@ -9,6 +9,8 @@ local createCapID = "honestadmin11679.targetcreate"
 local createTarget = caps[createCapID]
 local displayCapID = "honestadmin11679.targetCount"
 local display = caps[displayCapID]
+local utils = require "st.utils"
+
 
 local parentDeviceId
 
@@ -100,10 +102,10 @@ local function spawn_presence_interface_task(driver, dev_rx)
   --   interface_task_tick(driver, dev_rx)
   -- end)
   cosock.spawn(function()
-      while true do
-          interface_task_tick(driver, dev_rx)
-      end
-    end)
+    while true do
+      interface_task_tick(driver, dev_rx)
+    end
+  end)
 
 end
 
@@ -128,8 +130,8 @@ local function init(driver, device)
     end
     task.spawn_presence_task({
       devices = task_devs,
-      timeout = (device.preference or {}).timeout or 5,
-      away_trigger = (device.preferences or {}).awayTrigger or 60,
+      timeout = (device.preferences or {}).timeout or 5,
+      away_trigger = (device.preferences or {}).awayTrigger or 60 * 5,
     }, dev_tx, task_rx)
     spawn_presence_interface_task(driver, dev_rx)
     emit_target_count(driver, device)
@@ -148,11 +150,13 @@ local function init(driver, device)
 end
 
 local function info_changed(driver, device)
+  log.trace(utils.stringify_table(device.preferences, "Updated Preferences", true))
   if device_is_parent(device) then
     log.debug("parent device chaned")
   else
-    local prefs = device.preference or {}
+    local prefs = device.preferences or {}
     if prefs.clientname and #prefs.clientname > 0 then
+      log.debug("sending")
         driver.task_tx:send({
           kind = "new-device",
           id = device.id,

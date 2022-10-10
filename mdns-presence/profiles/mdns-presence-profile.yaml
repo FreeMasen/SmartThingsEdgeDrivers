@@ -16,3 +16,11 @@ preferences:
       min: 1
       max: 60
       default: 5
+  - preferenceType: integer
+    name: awayTrigger
+    title: When Away
+    required: true
+    description: Number of seconds w/o a response to make a device as away
+    definition:
+      min: 60
+      default: 300

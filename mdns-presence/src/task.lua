@@ -22,7 +22,7 @@ end
 
 function mdns_meta:receive()
     local response, err, _ = self.inner_sock:receive()
-    if err == "timeout" then
+    if not response and err == "timeout" then
         log.debug("receive timedout, calling select")
         _, err = cosock.socket.select({self.inner_sock}, {}, self.timeout)
         if err then return nil, err end
@@ -86,7 +86,12 @@ local function tick(state, tx, rx)
 end
 
 local function tick_discovery(state, tx, rx)
-    local res, err = mdns.discover(SERVICE_TYPE, DOMAIN)
+    if not next(state.devices) then
+        return log.warn("No devices, skipping mdns query")
+    end
+    local mdns = assert(new_mdns())
+    mdns:settimeout(60)
+    local res, err = mdns:discover(SERVICE_TYPE, DOMAIN)
     log.debug("ANSWERS")
     if not res then
         return log.warn("discovery err", err)
@@ -144,11 +149,10 @@ local function task(state, tx, rx)
         elseif err and err ~= "timeout" then
             log.error("Error in select/receive:", err)
         end
-        tick(state, tx, rx)
-        rxs, err = cosock.socket.select({rx}, {}, state.timeout)
-        if type(rxs) == "table" and #rxs > 0 then
-            event, err = rxs[1]:receive()
-        end
+        tick_discovery(state, tx, rx)
+        log.debug("waiting for message from driver")
+        rx:settimeout(state.timeout)
+        event, err = rx:receive()
     end
 end
 
