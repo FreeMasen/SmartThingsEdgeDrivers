@@ -54,7 +54,7 @@ parse_args() {
 }
 parse_args $@
 echo "packaging $PACKAGE_PATH"
-PACKAGE_JSON=st edge:drivers:package $PACKAGE_PATH --json
+PACKAGE_JSON="$(st edge:drivers:package $PACKAGE_PATH --json)"
 echo $?
 exit_on_error $?
 ID="$(echo "$PACKAGE_JSON" | jq -r ".driverId")"
