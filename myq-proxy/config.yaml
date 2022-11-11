@@ -1,0 +1,5 @@
+name: myq-proxy
+packageKey: myq-proxy
+permissions:
+  lan: {}
+  discovery: {}
