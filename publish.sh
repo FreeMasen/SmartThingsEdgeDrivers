@@ -37,6 +37,9 @@ parse_args() {
                     v2)
                         INSTALL_HUB_ID=$PROD_V2_HUB_ID
                         ;;
+                    pc)
+                        INSTALL_HUB_ID=$PROD_PC_HUB_ID
+                        ;;
                     *)
                         INSTALL_HUB_ID="$2"
                     ;;
