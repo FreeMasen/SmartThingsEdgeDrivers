@@ -31,13 +31,21 @@ local function create_device(driver, device_info)
   log.debug("creating a device", label, profile)
   local deviceNetworkId = device_info.id
   local profileReference = assert(device_type_to_profile[device_info.type], "unknown device type " ..device_info.type)
+  local parentDeviceId
+  if device_info.parent_device_id
+  and #device_info.parent_device_id > 0 then
+    parent = find_device_by_dni(device_info.parent_device_id)
+    if parent then
+      parentDeviceId = parent.device_id
+    end
+  end
   local device_info = {
       type = "LAN",
-      deviceNetworkId = device_info.id,
+      deviceNetworkId = device_info.serial_number,
       label = device_info.name,
       profileReference = profileReference,
       vendorProvidedName = device_info.name,
-      parentDeviceId = device_info.parent_id,
+      parentDeviceId = parentDeviceId
   }
   local device_info_json = json.encode(device_info)
   assert(driver.device_api.create_device(device_info_json))
@@ -65,21 +73,38 @@ local function interface_task_tick(driver, dev_rx)
     return log.error("Error in dev_rx:receive", err)
   end
   log.trace("task sent message")
-  if (ev or {}).kind == "presence-change" then
-    log.debug(ev.kind, ev.id, ev.is_present)
-    local device = driver:get_device_info(ev.id)
-    if not device then
-      return log.error("Unknown device id", ev.id)
+  if ev.type == "StateChange" then
+    --[[
+      {
+        "type": "StateChange",
+        "change": {
+          "kind": "deviceAdded",
+          "device_id": "CG080057D933",
+          "device_type": {
+            "kind": "garageDoor",
+            "state": "closed"
+          }
+        }
+      }
+      ]]
+      if ev.change.kind == "deviceUpdate" then
+        local device = find_device_by_dni(ev.change.device_id)
+        if not device then
+          return log.warn("Unknown device state change", utils.stringify_table(ev, "ev", true))
+        end
+        if ev.change.device_type.kind == "garageDoor" then
+          emit_door_state(device, ev.change.device_type.state)
+        elseif ev.change.device_type.kind == "lamp" then
+          emit_light_state(device, ev.change.device_type.state == "on")
+        end
+      elseif ev.change.kind == "deviceAdded" then
+        create_device(driver, ev.change.device_details)
+      elseif ev.change.kind == "deviceRemoved" then
+        local device = find_device_by_dni(ev.change.device_id)
+        if not device then
+          return log.warn("Unknown device remove", utils.stringify_table(ev, "ev", true))
+        end
     end
-    local event_ctor
-    if ev.is_present then
-      event_ctor = caps.presenceSensor.presence.present
-    else
-      event_ctor = caps.presenceSensor.presence.not_present
-    end
-    device:emit_event(event_ctor())
-  else
-    -- log.debug("Unknown event", utils.stringify_table(ev, "Event", true))
   end
 end
 
