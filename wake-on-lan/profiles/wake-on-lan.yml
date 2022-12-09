@@ -1,0 +1,38 @@
+name: wake-on-lan.v1
+components:
+- id: main
+  capabilities:
+  - id: momentary
+    version: 1
+  categories:
+  - name: RemoteController
+preferences:
+  - title: "MAC Address"
+    description: "MAC address of the machine to wake, with or without colors (:)"
+    required: true
+    preferenceType: string
+    name: macAddress
+    definition:
+      minLength: 12
+      maxLength: 17
+      stringType: text
+      default: "<update-mac-addr>"
+  - title: "SecureOn"
+    description: "SecureOn password as hex digits, with or without colons (:)"
+    required: false
+    preferenceType: string
+    name: secureOn
+    definition:
+      minLength: 0
+      maxLength: 17
+      stringType: text
+      default: ""
+  - title: "Port"
+    description: "Port UDP packet broadcast is sent to"
+    required: false
+    preferenceType: integer
+    name: port
+    definition:
+      minimum: 1
+      maximum: 65535
+      default: 9
