@@ -5,6 +5,7 @@ local log = require 'log'
 local discovery = require 'disco'
 local server = require 'server'
 local utils = require 'st.utils'
+local cosock = require "cosock"
 
 local currentUrlID = "honestadmin11679.currentUrl"
 local currentUrl = capabilities[currentUrlID]
@@ -121,9 +122,64 @@ function driver:emit_current_url()
         self:call_with_delay(1, self.emit_current_url)
     end
 end
+local MINUTE = 60
+local HOUR = MINUTE * 60
+local DAY = HOUR * 24
+local function format_duration(secs)
+    local mins, hrs, days = 0, 0, 0
+    while secs >= DAY do
+        days = days + 1
+        secs = secs - DAY
+    end
+    while secs >= HOUR do
+        hrs = hrs + 1
+        secs = secs - HOUR
+    end
+    while secs >= MINUTE do
+        mins = mins + 1
+        secs = secs - MINUTE
+    end
+    local ret = "P"
+    if days > 0 then
+        ret = tostring(days) .. "DT"
+    else
+        ret = ret .. "T"
+    end
+    if hrs > 0 then
+        ret = ret .. tostring(hrs) .. "H"
+    end
+    if mins > 0 then
+        ret = ret .. tostring(mins) .. "M"
+    end
+    if secs > 0 then
+        ret = ret .. tostring(secs) .. "S"
+    end
+    return ret
+end
 
-driver.ping_loop = driver:call_on_schedule(60, driver.print_listening_message)
-driver:call_with_delay(0, driver.emit_current_url)
+driver.ping_loop = driver:call_on_schedule(60, driver.print_listening_message, "listening_message")
+if type(cosock.get_thread_details) == "function" then
+    driver:call_on_schedule(60, function()
+        local threads = cosock.get_thread_details()
+        for thread, info in pairs(threads or {}) do
+            local dur = os.difftime(os.time(), info.last_wake)
+            local thread_name = info.name or ""
+            local ignore = thread_name:match("Button") or thread_name == "control" or thread_name == "driver"
+            if dur > MINUTE * 15 and not ignore then
+                local header = "***OLD THREAD***"
+                log.debug(header)
+                log.debug(info.name or tostring(thread))
+                log.debug("recvt", info.recvt)
+                log.debug("sendt", info.sendt)
+                log.debug("traceback", info.traceback)
+                log.debug("age", format_duration(dur))
+                log.debug("status", coroutine.status(thread))
+                log.debug(string.rep("*", #header))
+            end
+        end
+    end, "cosock-monitor")
+end
+driver:call_with_delay(0, driver.emit_current_url, "emit current url")
 
 server(driver)
 driver:print_listening_message()

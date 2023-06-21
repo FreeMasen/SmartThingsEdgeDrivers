@@ -115,153 +115,176 @@ end
 local function js()
     return [[
         const BUTTON_LIST_ID = 'button-list-container';
-        const NEW_BUTTON_ID = 'new-button';
-        let known_buttons = [];
-        
-        async function create_button() {
-            let result = await make_request('/newdevice', 'POST');
-            if (result.error) {
-                return console.error(result.error, result.body);
-            }
-            
-            let list;
-            let err_ct = 0;
-            while (true) {
-                try {
-                    list = await get_all_buttons();
-                } catch (e) {
-                    console.error('error fetching buttons', e);
-                    err_ct += 1;
-                    if (err_ct > 5) {
-                        break;
-                    }
-                    continue;
-                }
-                if (list.length !== known_buttons.length) {
-                    break;
-                }
-                await new Promise(resolve => {
-                    setTimeout(resolve, 500)
-                });
-            }
-            clear_button_list();
-            for (const info of list) {
-                append_new_button(info);
-            }
-        }
-        
-        function append_new_button(info) {
-            let list = document.getElementById(BUTTON_LIST_ID);
-            let container = document.createElement('div');
-            container.classList.add('button-container');
-            let button_title = document.createElement('span');
-            button_title.classList.add('button-title');
-            button_title.innerText = info.device_name;
-            button_title.addEventListener('dblclick', async () => {
-                button_title.contentEditable = true;
-                async function changed() {
-                    button_title.contentEditable = false;
-                    if (button_title.innerText !== info.device_name) {
-                        try {
-                            await make_request('/newlabel', 'POST', {
-                                device_id: info.device_id,
-                                name: button_title.innerText,
-                            });
-                        } catch (e) {
-                            button_title.innerText = info.device_name;
-        
-                        }
-                        button_title.removeEventListener('blur', changed);
-                    }
-                }
-                button_title.addEventListener('blur', changed);
-        
-            });
-            let delete_btn = document.createElement('button');
-            delete_btn.classList.add('delete-button')
-            container.appendChild(button_title)
-            let btns = document.createElement('div');
-            btns.classList.add('button-group');
-            let push_btn = document.createElement('button');
-            push_btn.classList.add('button-action', 'push');
-            push_btn.innerText = 'Push';
-            push_btn.addEventListener('click', () => push_button(info.device_id))
-            let hold_btn = document.createElement('button');
-            hold_btn.innerText = 'Hold';
-            hold_btn.classList.add('button-action', 'hold');
-            hold_btn.addEventListener('click', () => hold_button(info.device_id))
-            btns.appendChild(push_btn);
-            btns.appendChild(hold_btn);
-            container.appendChild(btns);
-            list.appendChild(container);
-        }
-        
-        async function push_button(id) {
-            return make_request('/action', 'POST', {
-                device_id: id,
-                action: 'push',
-            });
-        }
-        
-        async function hold_button(id) {
-            return make_request('/action', 'POST', {
-                device_id: id,
-                action: 'hold',
-            });
-        }
-        
-        async function make_request(url, method = 'GET', body = undefined) {
-            console.log('make_request', url, method, body);
-            let opts = {
-                method,
-                body,
-            }
-            if (typeof body == 'object') {
-                opts.body = JSON.stringify(body);   
-                opts.headers = {
-                    ['Content-Type']: 'application/json',
-                }
-            }
+const NEW_BUTTON_ID = 'new-button';
+let known_buttons = [];
 
-            return fetch(url, opts).then(async res => {
-                if (res.status !== 200) {
-                    return {
-                        error: res.statusText,
-                        body: await res.text()
-                    }
-                } 
-                return {
-                    body: await res.json()
-                }
-            })
+async function create_button() {
+    let result = await make_request('/newdevice', 'POST');
+    if (result.error) {
+        return console.error(result.error, result.body);
+    }
+
+    let list;
+    let err_ct = 0;
+    while (true) {
+        try {
+            list = await get_all_buttons();
+        } catch (e) {
+            console.error('error fetching buttons', e);
+            err_ct += 1;
+            if (err_ct > 5) {
+                break;
+            }
+            continue;
         }
-        
-        function clear_button_list() {
-            let list = document.getElementById(BUTTON_LIST_ID);
-            while (list.hasChildNodes()) {
-                list.removeChild(list.lastChild);
+        if (list.length !== known_buttons.length) {
+            break;
+        }
+        await new Promise(resolve => {
+            setTimeout(resolve, 500)
+        });
+    }
+    clear_button_list();
+    for (const info of list) {
+        append_new_button(info);
+    }
+}
+
+function append_new_button(info) {
+    let list = document.getElementById(BUTTON_LIST_ID);
+    let container = document.createElement('div');
+    container.classList.add('button-container');
+    let button_title = document.createElement('span');
+    button_title.classList.add('button-title');
+    button_title.innerText = info.device_name;
+    button_title.addEventListener('dblclick', async () => {
+        button_title.contentEditable = true;
+        async function changed() {
+            button_title.contentEditable = false;
+            if (button_title.innerText !== info.device_name) {
+                try {
+                    await make_request('/newlabel', 'POST', {
+                        device_id: info.device_id,
+                        name: button_title.innerText,
+                    });
+                } catch (e) {
+                    button_title.innerText = info.device_name;
+
+                }
+                button_title.removeEventListener('blur', changed);
             }
         }
-        
-        async function get_all_buttons() {
-            let result = await make_request('/info');
-            if (result.error) {
-                console.error(result.body);
-                throw new Error(result.error)
-            }
-            return result.body;
+        button_title.addEventListener('blur', changed);
+
+    });
+    let delete_btn = document.createElement('button');
+    delete_btn.classList.add('delete-button')
+    container.appendChild(button_title)
+    let btns = document.createElement('div');
+    btns.classList.add('button-group');
+    let push_btn = document.createElement('button');
+    push_btn.classList.add('button-action', 'push');
+    push_btn.innerText = 'Push';
+    push_btn.addEventListener('click', () => push_button(info.device_id))
+    let hold_btn = document.createElement('button');
+    hold_btn.innerText = 'Hold';
+    hold_btn.classList.add('button-action', 'hold');
+    hold_btn.addEventListener('click', () => hold_button(info.device_id))
+    btns.appendChild(push_btn);
+    btns.appendChild(hold_btn);
+    container.appendChild(btns);
+    list.appendChild(container);
+}
+
+async function push_button(id) {
+    return make_request('/action', 'POST', {
+        device_id: id,
+        action: 'push',
+    });
+}
+
+async function hold_button(id) {
+    return make_request('/action', 'POST', {
+        device_id: id,
+        action: 'hold',
+    });
+}
+
+async function make_request(url, method = 'GET', body = undefined) {
+    let controller = new AbortController()
+    let to = setTimeout(() => controller.abort(), 15000);
+    console.log('make_request', url, method, body);
+    let opts = {
+        method,
+        body,
+        signal: controller.signal,
+    };
+    if (typeof body == 'object') {
+        opts.body = JSON.stringify(body);
+        opts.headers = {
+            ['Content-Type']: 'application/json',
         }
-        
-        (() => {
-            get_all_buttons().then(list => {
-                known_buttons = list;
-                for (const info of list) {
-                    append_new_button(info);
-                }
-            }).catch(console.error);
-            let new_btn = document.getElementById(NEW_BUTTON_ID);
-            new_btn.addEventListener('click', create_button);
-        })();
+    }
+
+    return fetch(url, opts).then(async res => {
+        clearTimeout(to);
+        if (res.status !== 200) {
+            return {
+                error: res.statusText,
+                body: await res.text()
+            }
+        }
+        return {
+            body: await res.json()
+        }
+    }).catch(e => {
+        alert(`ERROR fetching ${url}: ${e}`);
+    })
+}
+
+function clear_button_list() {
+    let list = document.getElementById(BUTTON_LIST_ID);
+    while (list.hasChildNodes()) {
+        list.removeChild(list.lastChild);
+    }
+}
+
+async function get_all_buttons() {
+    let result = await make_request('/info');
+    if (result.error) {
+        console.error(result.body);
+        throw new Error(result.error)
+    }
+    return result.body;
+}
+
+(() => {
+    get_all_buttons().then(list => {
+        known_buttons = list;
+        for (const info of list) {
+            append_new_button(info);
+        }
+    }).catch(console.error);
+    let new_btn = document.getElementById(NEW_BUTTON_ID);
+    new_btn.addEventListener('click', create_button);
+})();
+
+async function run_spammy_debug() {
+    function sleep(s) {
+        return new Promise(r => setTimeout(r, s * 1000));
+    }
+    for (; ;) {
+        let devs = await get_all_buttons();
+        let reqs = []
+        for (let i = 0; i < 100; i++) {
+            let dev = devs[Math.floor(Math.random() * devs.length)];
+            reqs.push(push_button((dev || devs[0]).device_id));
+        }
+        await Promise.all(reqs);
+        await sleep(window.__sleep_seconds || 1)
+    }
+}
+
     ]]
 end
 

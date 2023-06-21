@@ -61,18 +61,30 @@ local function setup_multicast_disocvery(server)
     end)
 end
 
+local function send_response(res, body, status)
+    local status = status or 200
+    assert(res:set_status(status):send(body))
+end
 return function(driver)
     local server = lux.Server.new_with(cosock.socket.tcp(), {env = 'debug'})
     --- Connect the server up to a new socket
     server:listen()
     --- spawn a lua coroutine that will accept incomming connections and router
     --- their http requests
-    cosock.spawn(function()
-        while true do
-            server:tick(print)
-        end
-    end)
-
+    -- cosock.spawn(function()
+    --     while true do
+    --         server:tick(print)
+    --     end
+    -- end)
+    driver:register_channel_handler(server.sock, function()
+        print("ch handler!")
+        server:tick(function(err)
+            log.error("Error from tick: ", err)
+            (cosock.dump_thread_state or function()
+                log.warn("cosock.dump_thread_state is nil")
+            end)()
+        end)
+    end, "server tick loop")
     --- Middleware to log all incoming requests with the method and path
     server:use(function(req, res, next)
         local start = cosock.socket.gettime()
@@ -95,7 +107,7 @@ return function(driver)
         and req.url ~= '/favicon.ico'
         then
             res.headers:append('Location', '/index.html')
-            res:set_status(301):send()
+            send_response(res, "", 301)
         end
     end)
 
@@ -118,15 +130,15 @@ return function(driver)
     --- The static routes
     server:get('/index.html', function(req, res)
         res:set_content_type('text/html')
-        res:send(static:html())
+        send_response(res, static:html())
     end)
     server:get('/index.js', function(req, res)
         res:set_content_type('text/javascript')
-        res:send(static:js())
+        send_response(res, static:js())
     end)
     server:get('/style.css', function(req, res)
         res:set_content_type('text/css')
-        res:send(static:css())
+        send_response(res, static:css())
     end)
 
     --- Get a list of driver ids and driver names
@@ -141,18 +153,18 @@ return function(driver)
             })
         end
 
-        res:send(dkjson.encode(devices_list))
+        send_response(res, dkjson.encode(devices_list))
     end)
 
     --- Quiet the 60 second print statement about the server's address
     server:post('/quiet', function (req, res)
         if driver.ping_loop == nil then
-            res:send('Not currently printing')
+            send_response(res, 'Not currently printing')
             return
         end
         driver:cancel_timer(driver.ping_loop)
         driver.ping_loop = nil
-        res:send('Stopped ping loop')
+        send_response(res, 'Stopped ping loop')
     end)
 
     --- Create a new http button on this hub
@@ -160,10 +172,10 @@ return function(driver)
         local device_name, device_id, err_msg = discovery.add_device(driver)
         if err_msg ~= nil then
             log.error('error creating new device ' .. err_msg)
-            res:set_status(503):send('Failed to add new device')
+            send_response(res, 'Failed to add new device', 503)
             return
         end
-        res:send(dkjson.encode({
+        send_response(res, dkjson.encode({
             device_id = device_id,
             device_name = device_name,
         }))
@@ -172,12 +184,12 @@ return function(driver)
     --- Handle the `push` and `held` events for a button
     server:post('/action', function(req, res)
         if not req.body.device_id or not req.body.action then
-            res:set_status(400):send('bad request')
+            send_response(res, 'bad request', 400)
             return
         end
         local device = driver:get_device_info(req.body.device_id)
         if not device then
-            res:set_status(404):send('device not found')
+            send_response(res, 'device not found', 404)
             return
         end
         if req.body.action == 'push' then
@@ -185,21 +197,21 @@ return function(driver)
         elseif req.body.action == 'hold' then
             driver:hold(device)
         else
-            res:set_status(404):send('unknown action')
+            send_response(res, 'unknown action', 404)
             return
         end
-        res:send(req.raw_body)
+        send_response(res, req.raw_body)
     end)
 
     ---Update a device's label
     server:post('/newlabel', function(req, res)
         if not req.body.device_id or not req.body.name then
-            res:set_status(400):send('Failed to parse newlabel json')
+            send_response(res, 'Failed to parse newlabel json', 400)
             return
         end
         local device = driver:get_device_info(req.body.device_id)
         if not device then
-            res:set_status(404):send('Failed to update device, unknown')
+            send_response(res, 'Failed to update device, unknown', 404)
             return
         end
         local suc, err = device:try_update_metadata({
@@ -208,17 +220,17 @@ return function(driver)
         if not suc then
             local msg = string.format('error sending device update %s', err)
             log.debug(msg)
-            res:set_status(503):send(msg)
+            send_response(res, msg, 500)
             return
         end
-        res:send(dkjson.encode({
+        send_response(res, dkjson.encode({
             label = req.body.name,
         }))
     end)
 
     --- This route is for checking that the server is currently listening
     server:get('/health', function(req, res)
-        res:send('1')
+        send_response(res, '1')
     end)
 
     --- Get the current IP address, if not yet populated
@@ -232,6 +244,6 @@ return function(driver)
         end
         return self.ip
     end
-    setup_multicast_disocvery(server)
+    -- setup_multicast_disocvery(server)
     driver.server = server
 end
