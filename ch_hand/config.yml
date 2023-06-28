@@ -1,0 +1,5 @@
+name: ch_hand
+packageKey: ch_hand
+permissions:
+  lan: {}
+  discovery: {}

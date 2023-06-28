@@ -151,37 +151,42 @@ local function format_duration(secs)
     if mins > 0 then
         ret = ret .. tostring(mins) .. "M"
     end
-    if secs > 0 then
-        ret = ret .. tostring(secs) .. "S"
-    end
-    return ret
+    return ret .. tostring(secs) .. "S"
 end
 
 driver.ping_loop = driver:call_on_schedule(60, driver.print_listening_message, "listening_message")
-if type(cosock.get_thread_details) == "function" then
-    driver:call_on_schedule(60, function()
+local server_config = {
+    should_fail_next = false,
+}
+
+local function cosock_monitor()
+    print(type(cosock.get_thread_details))
+    if type(cosock.get_thread_details) == "function" then
         local threads = cosock.get_thread_details()
         for thread, info in pairs(threads or {}) do
             local dur = os.difftime(os.time(), info.last_wake)
             local thread_name = info.name or ""
             local ignore = thread_name:match("Button") or thread_name == "control" or thread_name == "driver"
+            server_config.should_fail_next = dur > MINUTE * 15 and not ignore
+            local header = "***THREAD***"
+            log.debug(header)
+            log.debug(info.name or tostring(thread))
+            -- log.debug("recvt", info.recvt)
+            -- log.debug("sendt", info.sendt)
+            log.debug("age", format_duration(dur))
+            log.debug("status", coroutine.status(thread))
             if dur > MINUTE * 15 and not ignore then
-                local header = "***OLD THREAD***"
-                log.debug(header)
-                log.debug(info.name or tostring(thread))
-                log.debug("recvt", info.recvt)
-                log.debug("sendt", info.sendt)
                 log.debug("traceback", info.traceback)
-                log.debug("age", format_duration(dur))
-                log.debug("status", coroutine.status(thread))
-                log.debug(string.rep("*", #header))
             end
+            log.debug(string.rep("*", #header))
         end
-    end, "cosock-monitor")
+    end
 end
+driver:call_on_schedule(60, cosock_monitor, "cosock-monitor")
 driver:call_with_delay(0, driver.emit_current_url, "emit current url")
+driver:call_with_delay(0, cosock_monitor, "init cosock-monitor")
 
-server(driver)
+server(driver, server_config)
 driver:print_listening_message()
 
 driver:run()

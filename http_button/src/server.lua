@@ -65,7 +65,8 @@ local function send_response(res, body, status)
     local status = status or 200
     assert(res:set_status(status):send(body))
 end
-return function(driver)
+return function(driver, config)
+    config = config or {}
     local server = lux.Server.new_with(cosock.socket.tcp(), {env = 'debug'})
     --- Connect the server up to a new socket
     server:listen()
@@ -79,12 +80,17 @@ return function(driver)
     driver:register_channel_handler(server.sock, function()
         print("ch handler!")
         server:tick(function(err)
-            log.error("Error from tick: ", err)
-            (cosock.dump_thread_state or function()
-                log.warn("cosock.dump_thread_state is nil")
-            end)()
+            print("Error from tick: ", err)
         end)
     end, "server tick loop")
+    server:use(function(req, res, next)
+        if config.should_fail_next then
+            config.should_fail_next = false
+            res.handled = true
+            return send_response(res, "failed", 500)
+        end
+        next(req, res)
+    end)
     --- Middleware to log all incoming requests with the method and path
     server:use(function(req, res, next)
         local start = cosock.socket.gettime()
@@ -231,6 +237,24 @@ return function(driver)
     --- This route is for checking that the server is currently listening
     server:get('/health', function(req, res)
         send_response(res, '1')
+    end)
+
+    server:get("/thread-info", function(req, res)
+        local resp
+        if cosock.get_thread_details then
+            local resp_t = {}
+            for th, info in pairs(cosock.get_thread_details()) do
+                info.status = coroutine.status(th)
+                info.age = os.difftime(os.time(), info.last_wake)
+                info.sock = tostring(res.socket)
+                table.insert(resp_t, info)
+            end
+            resp = dkjson.encode(resp_t)
+        else
+            resp = string.format("cosock.get_thread_details was %s",
+            type(cosock.get_thread_details))
+        end
+        send_response(res, resp)
     end)
 
     --- Get the current IP address, if not yet populated
