@@ -51,6 +51,7 @@ end
 
 local function send_response(res, body, status)
     local status = status or 200
+    res:add_header("content-type", "application/json")
     assert(res:set_status(status):send(body))
 end
 return function(driver, config)
@@ -130,20 +131,28 @@ return function(driver, config)
 
     server:get("/thread-info", function(req, res)
         local resp
-        if cosock.get_thread_details then
+        if cosock.get_thread_metadata then
             local resp_t = {}
+            local start = os.time()
             for th, info in pairs(cosock.get_thread_details()) do
                 info.status = coroutine.status(th)
-                info.age = os.difftime(os.time(), info.last_wake)
+                info.age = os.difftime(start, info.last_wake)
                 info.sock = tostring(res.socket)
                 table.insert(resp_t, info)
             end
             resp = dkjson.encode(resp_t)
         else
-            resp = string.format("cosock.get_thread_details was %s",
-            type(cosock.get_thread_details))
+            resp = dkjson.encode({
+                error = string.format("cosock.get_thread_details was %s",
+                    type(cosock.get_thread_details))
+            })
         end
+        
         send_response(res, resp)
+    end)
+    server:put("/toggle-verbose", function(req, res)
+        local should_print = cosock.toggle_print()
+        send_response(res, dkjson.encode({should_print = should_print}))
     end)
 
     --- Get the current IP address, if not yet populated
