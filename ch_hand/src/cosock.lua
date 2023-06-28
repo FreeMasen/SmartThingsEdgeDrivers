@@ -215,7 +215,7 @@ function m.spawn(fn, name)
   print("socket spawn", name or thread)
   threadnames[thread] = name
   threads[thread] = thread
-  last_wakes[thread] = 0
+  last_wakes[thread] = os.time()
   readythreads[thread] = {}
 end
 

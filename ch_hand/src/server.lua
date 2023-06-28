@@ -134,8 +134,7 @@ return function(driver, config)
         if cosock.get_thread_metadata then
             local resp_t = {}
             local start = os.time()
-            for th, info in pairs(cosock.get_thread_details()) do
-                info.status = coroutine.status(th)
+            for _, info in pairs(cosock.get_thread_metadata()) do
                 info.age = os.difftime(start, info.last_wake)
                 info.sock = tostring(res.socket)
                 table.insert(resp_t, info)
