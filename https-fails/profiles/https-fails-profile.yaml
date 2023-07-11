@@ -15,3 +15,30 @@ preferences:
       maxLength: 20
       stringType: text
       default: ''
+  - preferenceType: integer
+    title: version
+    required: true
+    description: The version to call
+    name: version
+    definition:
+      default: 1
+      min: 1
+      max: 3
+  - preferenceType: string
+    title: Endpoint
+    description: The endpoint to call
+    name: endpoint
+    definition:
+      minLength: 0
+      maxLength: 20
+      stringType: text
+      default: ''
+  - preferenceType: integer
+    title: timeout
+    required: true
+    description: How often to automatically call the endpoint
+    name: timeout
+    definition:
+      default: 0
+      min: 0
+      max: 120
