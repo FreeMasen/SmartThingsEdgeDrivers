@@ -4,22 +4,29 @@ components:
     capabilities:
       - id: switch
         version: 1
+  - id: printJob
+    capabilities:
+    - id: honestadmin11679.jobFile
+      version: 1
+    - id: estimatedTimeOfArrival
+      version: 1
   - id: tool
     capabilities:
       - id: thermostatOperatingState
         version: 1
-      - id: thermostatHeatingSetpoint
+      - id: honestadmin11679.thermostatHeatingSetPoint
         version: 1
-      - id: temperatureMeasurement
+      - id: honestadmin11679.temperatureValue
         version: 1
   - id: bed
     capabilities:
       - id: thermostatOperatingState
         version: 1
-      - id: thermostatHeatingSetpoint
+      - id: honestadmin11679.thermostatHeatingSetPoint
         version: 1
-      - id: temperatureMeasurement
+      - id: honestadmin11679.temperatureValue
         version: 1
+      
 preferences:
   - preferenceType: string
     title: Username

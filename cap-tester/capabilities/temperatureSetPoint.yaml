@@ -1,7 +1,7 @@
 id: honestadmin11679.temperatureSetPoint
 version: 1
 status: proposed
-name: Temperature
+name: Temperature Set Point
 attributes:
   target:
     schema:
@@ -18,9 +18,10 @@ attributes:
 commands:
   setTarget:
     arguments:
-    - name: setTarget
-      required: true
+    - name: target
       schema:
         type: number
-      type: number
+        minimum: 0
+        maximum: 300
+        default: 0
 ocfResourceType: x.com.st.temperature.heating

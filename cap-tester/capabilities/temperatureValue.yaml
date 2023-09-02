@@ -1,9 +1,9 @@
-id: honestadmin11679.temperatureSetPoint
+id: honestadmin11679.temperatureValue
 version: 1
 status: proposed
 name: Temperature
 attributes:
-  target:
+  value:
     schema:
       type: object
       properties:
@@ -14,13 +14,3 @@ attributes:
       additionalProperties: false
       required:
         - value
-    setter: setTarget
-commands:
-  setTarget:
-    arguments:
-    - name: setTarget
-      required: true
-      schema:
-        type: number
-      type: number
-ocfResourceType: x.com.st.temperature.heating

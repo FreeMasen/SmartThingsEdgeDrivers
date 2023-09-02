@@ -1,17 +1,14 @@
-id: honestadmin11679.jobPercent
+id: honestadmin11679.jobFile
 version: 1
 status: proposed
-name: Job Percent
+name: Job File
 attributes:
-  jobPercent:
+  jobFile:
     schema:
       type: object
       properties:
         value:
-          type: number
-          minimum: 0
-          maximum: 100
+          type: string
       additionalProperties: false
       required:
         - value
-    enumCommands: []

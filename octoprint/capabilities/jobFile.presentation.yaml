@@ -1,0 +1,12 @@
+dashboard:
+  state:
+    - label: '{{jobFile.value}}'
+  actions: []
+  basicPlus: []
+detailView:
+  - label: Job
+    displayType: state
+    state:
+      label: "{{jobFile.value}} %"
+id: honestadmin11679.jobFile
+version: 1

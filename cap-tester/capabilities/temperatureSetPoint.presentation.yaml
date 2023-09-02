@@ -8,8 +8,8 @@ detailView:
   - label: Target
     displayType: slider
     slider:
-      command: setTemperatureSetPoint
-      value: temperatureSetPoint.target
+      command: setTarget
+      step: 1
       range:
         - 0
         - 300

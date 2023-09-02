@@ -1,0 +1,26 @@
+name: cap-tester.v1
+components:
+  - id: main
+    capabilities:
+      - id: button
+        version: 1
+      - id: honestadmin11679.jobFile
+        version: 1
+      - id: honestadmin11679.jobPercent
+        version: 1
+      - id: honestadmin11679.jobTimeRemaining
+        version: 1
+      - id: honestadmin11679.temperatureSetPoint
+        version: 1
+      - id: honestadmin11679.temperature
+        version: 1
+preferences:
+  - preferenceType: number
+    name: junk
+    title: haha
+    required: true
+    description: shut up
+    definition:
+      min: 0
+      max: 36
+      default: 10

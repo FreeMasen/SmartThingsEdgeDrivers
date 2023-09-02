@@ -1,0 +1,13 @@
+dashboard:
+  states:
+    - label: '{{temperature.value}} C'
+      alternatives: []
+  actions: []
+  basicPlus: []
+detailView:
+  - label: Temperature
+    displayType: state
+    state:
+      label: "{{temperature.value}} C"
+id: honestadmin11679.temperature
+version: 1

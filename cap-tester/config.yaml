@@ -1,0 +1,5 @@
+name: 'cap-tester'
+packageKey: 'cap-tester'
+permissions:
+  lan: {}
+  discovery: {}

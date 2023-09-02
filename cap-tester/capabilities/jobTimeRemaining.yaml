@@ -1,0 +1,36 @@
+id: honestadmin11679.jobTimeRemaining
+version: 1
+status: proposed
+name: Job Time Remaining
+attributes:
+  hours:
+    schema:
+      type: object
+      properties:
+        value:
+          type: number
+          minimum: 0
+          maximum: 48
+          default: 0
+      additionalProperties: false
+  minutes:
+    schema:
+      type: object
+      properties:
+        value:
+          type: number
+          minimum: 0
+          maximum: 60
+          default: 0
+      additionalProperties: false
+  seconds:
+    schema:
+      type: object
+      properties:
+        value:
+          type: number
+          minimum: 0
+          maximum: 60
+          default: 0
+      additionalProperties: false
+    enumCommands: []

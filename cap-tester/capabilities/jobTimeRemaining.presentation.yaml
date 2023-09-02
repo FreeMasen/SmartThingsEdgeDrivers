@@ -1,0 +1,12 @@
+dashboard:
+  states:
+    - label: '{{jobTimeRemaining.hours}}:{{jobTimeRemaining.minutes}}:{{jobTimeRemaining.seconds}}'
+  actions: []
+  basicPlus: []
+detailView:
+  - label: Job
+    displayType: state
+    state:
+      label: '{{jobTimeRemaining.hours}}:{{jobTimeRemaining.minutes}}:{{jobTimeRemaining.seconds}}'
+id: honestadmin11679.jobTimeRemaining
+version: 1
