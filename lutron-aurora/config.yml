@@ -1,0 +1,4 @@
+name: Lutron Auroroa
+packageKey: lutron_aurora
+permissions:
+  zigbee: {}

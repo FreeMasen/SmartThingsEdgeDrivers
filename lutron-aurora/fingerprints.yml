@@ -1,0 +1,6 @@
+zigbeeManufacturer:
+  - id: Lutron/Aurora
+    deviceLabel: Lutron Aurora
+    manufacturer: Lutron
+    model: Z3-1BRL
+    deviceProfileName: lutron-aurora.v1
