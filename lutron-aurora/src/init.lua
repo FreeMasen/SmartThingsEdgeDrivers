@@ -2,14 +2,12 @@ local zcl_clusters = require "st.zigbee.zcl.clusters"
 local Level = zcl_clusters.Level
 local ZigbeeDriver = require "st.zigbee"
 local capabilities = require "st.capabilities"
-local clusters = require "st.zigbee.zcl.clusters"
 local device_management = require "st.zigbee.device_management"
 local utils = require 'st.utils'
 
-local PowerConfiguration = clusters.PowerConfiguration
-local Groups = clusters.Groups
+local PowerConfiguration = zcl_clusters.PowerConfiguration
+local Groups = zcl_clusters.Groups
 
-local ENTRIES_READ = "ENTRIES_READ"
 local CURRENT_LEVEL = "CURRENT_LEVEL"
 
 local do_configure = function(self, device)
@@ -18,9 +16,9 @@ local do_configure = function(self, device)
   device:send(device_management.build_bind_request(device, PowerConfiguration.ID, self.environment_info.hub_zigbee_eui))
   device:send(device_management.build_bind_request(device, Level.ID, self.environment_info.hub_zigbee_eui))
   device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:configure_reporting(device, 30, 21600, 1))
-  device:send(Level.attributes.CurrentLevel:configure_reporting(device, 5, 15, 1))
+  -- device:send(Level.attributes.CurrentLevel:configure_reporting(device, 5, 15, 1))
   self:add_hub_to_zigbee_group(0xf105)
-  device:send(Groups.commands.AddGroup(device, 0xf105))
+  -- device:send(Groups.commands.AddGroup(device, 0xf105))
 
 end
 
@@ -28,7 +26,8 @@ local function added_handler(self, device)
   print("added_handler")
   local number_of_buttons = 1
   for _, component in pairs(device.profile.components) do
-    device:emit_component_event(component, capabilities.button.numberOfButtons({value = number_of_buttons}))
+    device:emit_component_event(component, capabilities.button.numberOfButtons({ value = number_of_buttons }))
+    device:emit_event(capabilities.button.supportedButtonValues({"pushed"}, {visibility = { displayed = false }}))
   end
   device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:read(device))
   device:send(Level.attributes.CurrentLevel:read(device))
@@ -50,7 +49,7 @@ local function level_event_handler(driver, device, cmd)
     device:emit_event(capabilities.button.button.pushed())
   elseif time == 2 then
     local current = device:get_field(CURRENT_LEVEL) or 0
-    if value > 126 then
+    if value > 3 then
       current = math.min(100, current + level_step)
     else
       current = math.max(0, current - level_step)
