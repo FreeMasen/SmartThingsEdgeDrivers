@@ -1,4 +1,4 @@
-name: Lutron Auroroa
+name: Lutron Aurora
 packageKey: lutron_aurora
 permissions:
   zigbee: {}
