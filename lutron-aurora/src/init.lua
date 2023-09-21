@@ -42,7 +42,7 @@ local function level_event_handler(driver, device, cmd)
   local value = cmd.body.zcl_body.level.value
   local time = cmd.body.zcl_body.transition_time.value
   if time == 7 then
-    device:emit_event(capabilities.button.button.pushed())
+    device:emit_event(capabilities.button.button.pushed({stateChange = true}))
   elseif time == 2 then
     local current = device:get_latest_state("main", "switchLevel", "level", 0)
     -- look up the last event which will either be 3 or some larger value
