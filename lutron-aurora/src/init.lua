@@ -4,17 +4,19 @@ local ZigbeeDriver = require "st.zigbee"
 local capabilities = require "st.capabilities"
 local device_management = require "st.zigbee.device_management"
 local utils = require 'st.utils'
+local Status = require "st.zigbee.generated.types.ZclStatus"
+local Uint8 = require "st.zigbee.data_types.Uint8"
+
 
 local PowerConfiguration = zcl_clusters.PowerConfiguration
 local Groups = zcl_clusters.Groups
-local Basic = zcl_clusters.Basic
 
 local LAST_LEVEL_EVENT = "LAST_LEVEL_EVENT"
 local DEVICE_GROUP = "DEVICE_GROUP"
 --server: Basic, PowerConfiguration, Identify, TouchlinkCommissioning, 0xFC00 
 --client: Identify, Groups, OnOff, Level, OTAUpgrade, TouchlinkCommissioning
 
-local do_configure = function(self, device)
+local function do_configure(self, device)
   device:send(device_management.build_bind_request(device, PowerConfiguration.ID, self.environment_info.hub_zigbee_eui))
   device:send(device_management.build_bind_request(device, Level.ID, self.environment_info.hub_zigbee_eui))
   device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:configure_reporting(device, 30, 21600, 1))
@@ -24,7 +26,6 @@ local function added_handler(self, device)
   device:emit_event(capabilities.button.numberOfButtons({ value = 1 }))
   device:emit_event(capabilities.button.supportedButtonValues({"pushed"}, {visibility = { displayed = false }}))
   device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:read(device))
-  device:send(Basic.attributes.ZCLVersion:read(device))
   device:emit_event(capabilities.button.button.pushed({ state_change = false }))
   device:emit_event(capabilities.switchLevel.level(0, { state_change = false }))
 end
@@ -58,7 +59,7 @@ local function level_event_handler(driver, device, cmd)
       device:set_field(LAST_LEVEL_EVENT, 3)
     end)
     device:emit_event(capabilities.switchLevel.level(math.floor(utils.clamp_value(current + added, 0, 100))))
-    device:set_field(LAST_LEVEL_EVENT, value, {persist = false})
+    device:set_field(LAST_LEVEL_EVENT, value)
   end
 end
 
@@ -68,6 +69,20 @@ local function group_handler(driver, device, info)
   -- like we should be leaving the group on device remove but that API doesn't seem to exist
   device:set_field(DEVICE_GROUP, info.body.zcl_body.group_id.value, {persist = true})
   driver:add_hub_to_zigbee_group(info.body.zcl_body.group_id.value)
+end
+
+local function handle_read_level_request(driver, device, info)
+  local read_attr_response = require "st.zigbee.zcl.global_commands.read_attribute_response"
+  local current = device:get_latest_state("main", "switchLevel", "level", 0)
+  local response = read_attr_response.ReadAttributeResponse({
+    read_attr_response.ReadAttributeResponseAttributeRecord(
+      Level.attributes.CurrentLevel.ID,
+      Status.SUCCESS,
+      Uint8, -- Uint8,
+      current
+    )
+  })
+    -- TODO: send the response
 end
 
 local driver_template = {
@@ -87,14 +102,14 @@ local driver_template = {
     os.exit(0)
   end,
   zigbee_handlers = {
+    global = {
+      [Level.ID] = {
+        [0x00] = handle_read_level_request
+      }
+    },
     attr = {
       [PowerConfiguration.ID] = {
         [PowerConfiguration.attributes.BatteryPercentageRemaining.ID] = battery_perc_attr_handler
-      },
-      [Basic.ID] = {
-        [Basic.attributes.ZCLVersion.ID] = function(_,_,info)
-          print(utils.stringify_table(info, "ZCLVersion", true))
-        end
       },
       [Level.ID] = {
         [Level.attributes.CurrentLevel.ID] = function(_, _, info)
