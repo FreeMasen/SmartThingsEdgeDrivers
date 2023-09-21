@@ -7,6 +7,7 @@ local utils = require 'st.utils'
 
 local PowerConfiguration = zcl_clusters.PowerConfiguration
 local Groups = zcl_clusters.Groups
+local Basic = zcl_clusters.Basic
 
 local LAST_LEVEL_EVENT = "LAST_LEVEL_EVENT"
 local DEVICE_GROUP = "DEVICE_GROUP"
@@ -20,15 +21,16 @@ local do_configure = function(self, device)
 end
 
 local function added_handler(self, device)
-  device:emit_component_event(device.profile.components[1], capabilities.button.numberOfButtons({ value = 1 }))
+  device:emit_event(capabilities.button.numberOfButtons({ value = 1 }))
   device:emit_event(capabilities.button.supportedButtonValues({"pushed"}, {visibility = { displayed = false }}))
   device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:read(device))
+  device:send(Basic.attributes.ZCLVersion:read(device))
   device:emit_event(capabilities.button.button.pushed({ state_change = false }))
   device:emit_event(capabilities.switchLevel.level(0, { state_change = false }))
 end
 
 local battery_perc_attr_handler = function(_, device, value, _)
-  device:emit_event(capabilities.battery.battery(utils.clamp_value(value.value, 0, 100)))
+  device:emit_event(capabilities.battery.battery(utils.clamp_value(math.floor(value.value/2), 0, 100)))
 end
 
 local function level_event_handler(driver, device, cmd)
@@ -81,11 +83,24 @@ local driver_template = {
     added = added_handler,
     init = added_handler,
   },
+  driver_lifecycle = function()
+    os.exit(0)
+  end,
   zigbee_handlers = {
     attr = {
       [PowerConfiguration.ID] = {
         [PowerConfiguration.attributes.BatteryPercentageRemaining.ID] = battery_perc_attr_handler
       },
+      [Basic.ID] = {
+        [Basic.attributes.ZCLVersion.ID] = function(_,_,info)
+          print(utils.stringify_table(info, "ZCLVersion", true))
+        end
+      },
+      [Level.ID] = {
+        [Level.attributes.CurrentLevel.ID] = function(_, _, info)
+          print(utils.stringify_table(info, "CurrentLevel", true))
+        end
+      }
     },
     cluster = {
       [Level.ID] = {
