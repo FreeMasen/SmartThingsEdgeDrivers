@@ -4,6 +4,7 @@ local ZigbeeDriver = require "st.zigbee"
 local capabilities = require "st.capabilities"
 local device_management = require "st.zigbee.device_management"
 local utils = require "st.utils"
+local zcl_commands = require "st.zigbee.zcl.global_commands"
 local read_responder = require "read_responder"
 
 local PowerConfiguration = zcl_clusters.PowerConfiguration
@@ -91,12 +92,8 @@ local driver_template = {
   zigbee_handlers = {
     global = {
       [Level.ID] = {
-        [0x00] = function(_driver, device, info)
-          return read_responder(
-            device, info.address_header.src_addr.value,
-            info.address_header.src_endpoint.value,
-            info.address_header.profile.value
-          )
+        [zcl_commands.ReportAttribute.ID] = function(_driver, device, info)
+          return read_responder(device)
         end
       }
     },
