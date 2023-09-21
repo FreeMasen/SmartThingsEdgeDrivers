@@ -20,11 +20,8 @@ local do_configure = function(self, device)
 end
 
 local function added_handler(self, device)
-  for _, component in pairs(device.profile.components) do
-    device:emit_component_event(component, capabilities.button.numberOfButtons({ value = 1 }))
-    device:emit_event(capabilities.button.supportedButtonValues({"pushed"}, {visibility = { displayed = false }}))
-  end
-  device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:read(device))
+  device:emit_component_event(device.profile.components[1], capabilities.button.numberOfButtons({ value = 1 }))
+  device:emit_event(capabilities.button.supportedButtonValues({"pushed"}, {visibility = { displayed = false }}))
   device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:read(device))
   device:emit_event(capabilities.button.button.pushed({ state_change = false }))
   device:emit_event(capabilities.switchLevel.level(0, { state_change = false }))
