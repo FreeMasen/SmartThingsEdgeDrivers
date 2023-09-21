@@ -16,6 +16,11 @@ local DEVICE_GROUP = "DEVICE_GROUP"
 --client: Identify, Groups, OnOff, Level, OTAUpgrade, TouchlinkCommissioning
 
 local function do_configure(self, device)
+  if not self.environment_info.hub_zigbee_eui then
+    return self:call_with_delay(1, function()
+      do_configure(self, device)
+    end)
+  end
   device:send(device_management.build_bind_request(device, PowerConfiguration.ID, self.environment_info.hub_zigbee_eui))
   device:send(device_management.build_bind_request(device, Level.ID, self.environment_info.hub_zigbee_eui))
   device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:configure_reporting(device, 30, 21600, 1))
