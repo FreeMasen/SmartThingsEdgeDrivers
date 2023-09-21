@@ -58,7 +58,7 @@ local function level_event_handler(driver, device, cmd)
     driver:call_with_delay(1, function()
       device:set_field(LAST_LEVEL_EVENT, 3)
     end)
-    device:emit_event(capabilities.switchLevel.level(math.floor(utils.clamp_value(current + added))))
+    device:emit_event(capabilities.switchLevel.level(math.floor(utils.clamp_value(current + added, 0, 100))))
     device:set_field(LAST_LEVEL_EVENT, value, {persist = false})
   end
 end
