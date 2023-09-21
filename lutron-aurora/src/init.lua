@@ -3,10 +3,8 @@ local Level = zcl_clusters.Level
 local ZigbeeDriver = require "st.zigbee"
 local capabilities = require "st.capabilities"
 local device_management = require "st.zigbee.device_management"
-local utils = require 'st.utils'
-local Status = require "st.zigbee.generated.types.ZclStatus"
-local Uint8 = require "st.zigbee.data_types.Uint8"
-
+local utils = require "st.utils"
+local read_responder = require "read_responder"
 
 local PowerConfiguration = zcl_clusters.PowerConfiguration
 local Groups = zcl_clusters.Groups
@@ -35,6 +33,7 @@ local battery_perc_attr_handler = function(_, device, value, _)
 end
 
 local function level_event_handler(driver, device, cmd)
+  
   -- The device is essentially a stateless dimmer, it will always send events with a transition_time
   -- of 7 for on/off events and the value will be either 255 or 0, the memory on the device
   -- seems to reset after about 1 second so 0 is a bit rare. If the transition_time is 2 then
@@ -44,6 +43,7 @@ local function level_event_handler(driver, device, cmd)
   local level_step = device.preferences.stepSize or 5
   local value = cmd.body.zcl_body.level.value
   local time = cmd.body.zcl_body.transition_time.value
+  print("level_event_handler", value, time)
   if time == 7 then
     device:emit_event(capabilities.button.button.pushed({stateChange = true}))
   elseif time == 2 then
@@ -61,6 +61,7 @@ local function level_event_handler(driver, device, cmd)
     device:emit_event(capabilities.switchLevel.level(math.floor(utils.clamp_value(current + added, 0, 100))))
     device:set_field(LAST_LEVEL_EVENT, value)
   end
+  print("level_event_handler exit", device:get_latest_state("main", "switchLevel", "level", 0))
 end
 
 local function group_handler(driver, device, info)
@@ -69,20 +70,6 @@ local function group_handler(driver, device, info)
   -- like we should be leaving the group on device remove but that API doesn't seem to exist
   device:set_field(DEVICE_GROUP, info.body.zcl_body.group_id.value, {persist = true})
   driver:add_hub_to_zigbee_group(info.body.zcl_body.group_id.value)
-end
-
-local function handle_read_level_request(driver, device, info)
-  local read_attr_response = require "st.zigbee.zcl.global_commands.read_attribute_response"
-  local current = device:get_latest_state("main", "switchLevel", "level", 0)
-  local response = read_attr_response.ReadAttributeResponse({
-    read_attr_response.ReadAttributeResponseAttributeRecord(
-      Level.attributes.CurrentLevel.ID,
-      Status.SUCCESS,
-      Uint8, -- Uint8,
-      current
-    )
-  })
-    -- TODO: send the response
 end
 
 local driver_template = {
@@ -104,7 +91,13 @@ local driver_template = {
   zigbee_handlers = {
     global = {
       [Level.ID] = {
-        [0x00] = handle_read_level_request
+        [0x00] = function(_driver, device, info)
+          return read_responder(
+            device, info.address_header.src_addr.value,
+            info.address_header.src_endpoint.value,
+            info.address_header.profile.value
+          )
+        end
       }
     },
     attr = {
