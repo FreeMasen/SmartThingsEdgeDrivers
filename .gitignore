@@ -1,1 +1,7 @@
 ids_env
+.luarocks/config-5.3.lua
+.luarocks/default-lua-version.lua
+lua
+luarocks
+smartthingsedgedrivers-dev-1.rockspec
+test-api-key
