@@ -15,31 +15,39 @@ local DEVICE_GROUP = "DEVICE_GROUP"
 --server: Basic, PowerConfiguration, Identify, TouchlinkCommissioning, 0xFC00 
 --client: Identify, Groups, OnOff, Level, OTAUpgrade, TouchlinkCommissioning
 
-local function do_configure(self, device)
-  if not self.environment_info.hub_zigbee_eui then
-    return self:call_with_delay(1, function()
-      do_configure(self, device)
+local function do_configure(driver, device)
+  if not driver.environment_info.hub_zigbee_eui then
+    return driver:call_with_delay(1, function()
+      do_configure(driver, device)
     end)
   end
-  device:send(device_management.build_bind_request(device, PowerConfiguration.ID, self.environment_info.hub_zigbee_eui))
-  device:send(device_management.build_bind_request(device, Level.ID, self.environment_info.hub_zigbee_eui))
+  device:send(device_management.build_bind_request(device, PowerConfiguration.ID, driver.environment_info.hub_zigbee_eui))
+  device:send(device_management.build_bind_request(device, Level.ID, driver.environment_info.hub_zigbee_eui))
   device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:configure_reporting(device, 30, 21600, 1))
 end
 
-local function added_handler(self, device)
+--- The shared logic for both `init` and `added` events.
+local function start_device(device)
   device:emit_event(capabilities.button.numberOfButtons({ value = 1 }))
   device:emit_event(capabilities.button.supportedButtonValues({"pushed"}, {visibility = { displayed = false }}))
   device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:read(device))
+end
+
+local function added_handler(_, device)
+  start_device(device)
   device:emit_event(capabilities.button.button.pushed({ state_change = false }))
   device:emit_event(capabilities.switchLevel.level(0, { state_change = false }))
 end
 
-local battery_perc_attr_handler = function(_, device, value, _)
+local function init_handler(driver, device)
+  start_device(device)
+end
+
+local function battery_perc_attr_handler(_, device, value, _)
   device:emit_event(capabilities.battery.battery(utils.clamp_value(math.floor(value.value/2), 0, 100)))
 end
 
 local function level_event_handler(driver, device, cmd)
-  
   -- The device is essentially a stateless dimmer, it will always send events with a transition_time
   -- of 7 for on/off events and the value will be either 255 or 0, the memory on the device
   -- seems to reset after about 1 second so 0 is a bit rare. If the transition_time is 2 then
@@ -89,7 +97,7 @@ local driver_template = {
   lifecycle_handlers = {
     doConfigure = do_configure,
     added = added_handler,
-    init = added_handler,
+    init = init_handler,
   },
   driver_lifecycle = function()
     os.exit(0)
