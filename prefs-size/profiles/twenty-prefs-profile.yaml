@@ -1,0 +1,207 @@
+name: twenty-prefs.v1
+components:
+  - id: main
+    capabilities:
+    - id: switch
+      version: 1
+preferences:
+  - preferenceType: string
+    title: Pref1
+    required: true
+    description: Pref1
+    name: pref1
+    definition:
+      minLength: 0
+      maxLength: 36
+      stringType: text
+      default: ''
+  - preferenceType: string
+    title: Pref2
+    required: true
+    description: Pref2
+    name: pref2
+    definition:
+      minLength: 0
+      maxLength: 36
+      stringType: text
+      default: ''
+  - preferenceType: string
+    title: Pref3
+    required: true
+    description: Pref3
+    name: pref3
+    definition:
+      minLength: 0
+      maxLength: 36
+      stringType: text
+      default: ''
+  - preferenceType: string
+    title: Pref4
+    required: true
+    description: Pref4
+    name: pref4
+    definition:
+      minLength: 0
+      maxLength: 36
+      stringType: text
+      default: ''
+  - preferenceType: string
+    title: Pref5
+    required: true
+    description: Pref5
+    name: pref5
+    definition:
+      minLength: 0
+      maxLength: 36
+      stringType: text
+      default: ''
+  - preferenceType: string
+    title: Pref6
+    required: true
+    description: Pref6
+    name: pref6
+    definition:
+      minLength: 0
+      maxLength: 36
+      stringType: text
+      default: ''
+  - preferenceType: string
+    title: Pref7
+    required: true
+    description: Pref7
+    name: pref7
+    definition:
+      minLength: 0
+      maxLength: 36
+      stringType: text
+      default: ''
+  - preferenceType: string
+    title: Pref8
+    required: true
+    description: Pref8
+    name: pref8
+    definition:
+      minLength: 0
+      maxLength: 36
+      stringType: text
+      default: ''
+  - preferenceType: string
+    title: Pref9
+    required: true
+    description: Pref9
+    name: pref9
+    definition:
+      minLength: 0
+      maxLength: 36
+      stringType: text
+      default: ''
+  - preferenceType: string
+    title: Pref10
+    required: true
+    description: Pref10
+    name: pref10
+    definition:
+      minLength: 0
+      maxLength: 36
+      stringType: text
+      default: ''
+  - preferenceType: string
+    title: Pref11
+    required: true
+    description: Pref11
+    name: pref11
+    definition:
+      minLength: 0
+      maxLength: 36
+      stringType: text
+      default: ''
+  - preferenceType: string
+    title: Pref12
+    required: true
+    description: Pref12
+    name: pref12
+    definition:
+      minLength: 0
+      maxLength: 36
+      stringType: text
+      default: ''
+  - preferenceType: string
+    title: Pref13
+    required: true
+    description: Pref13
+    name: pref13
+    definition:
+      minLength: 0
+      maxLength: 36
+      stringType: text
+      default: ''
+  - preferenceType: string
+    title: Pref14
+    required: true
+    description: Pref14
+    name: pref14
+    definition:
+      minLength: 0
+      maxLength: 36
+      stringType: text
+      default: ''
+  - preferenceType: string
+    title: Pref15
+    required: true
+    description: Pref15
+    name: pref15
+    definition:
+      minLength: 0
+      maxLength: 36
+      stringType: text
+      default: ''
+  - preferenceType: string
+    title: Pref16
+    required: true
+    description: Pref16
+    name: pref16
+    definition:
+      minLength: 0
+      maxLength: 36
+      stringType: text
+      default: ''
+  - preferenceType: string
+    title: Pref17
+    required: true
+    description: Pref17
+    name: pref17
+    definition:
+      minLength: 0
+      maxLength: 36
+      stringType: text
+      default: ''
+  - preferenceType: string
+    title: Pref18
+    required: true
+    description: Pref18
+    name: pref18
+    definition:
+      minLength: 0
+      maxLength: 36
+      stringType: text
+      default: ''
+  - preferenceType: string
+    title: Pref19
+    required: true
+    description: Pref19
+    name: pref19
+    definition:
+      minLength: 0
+      maxLength: 36
+      stringType: text
+      default: ''
+  - preferenceType: string
+    title: Pref20
+    required: true
+    description: Pref20
+    name: pref20
+    definition:
+      minLength: 0
+      maxLength: 36
+      stringType: text
+      default: ''

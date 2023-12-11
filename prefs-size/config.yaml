@@ -1,0 +1,5 @@
+name: prefs-size
+packageKey: prefs-size
+permissions:
+  lan: {}
+  discovery: {}
