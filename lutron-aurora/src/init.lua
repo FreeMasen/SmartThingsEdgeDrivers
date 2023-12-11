@@ -53,11 +53,11 @@ local function init_handler(driver, device)
 end
 
 local function battery_perc_attr_handler(_, device, value, _)
-  device:emit_event(capabilities.battery.battery(utils.clamp_value(math.floor(value.value/2), 0, 100)))
+    device:emit_event(capabilities.battery.battery(utils.clamp_value(math.floor(value.value / 2), 0, 100)))
 end
 
 local function level_event_handler(driver, device, cmd)
-  -- The device is essentially a stateless dimmer, it will always send events with a transition_time
+  -- The device will always send events with a transition_time
   -- of 7 for on/off events and the value will be either 255 or 0, the memory on the device
   -- seems to reset after about 1 second so 0 is a bit rare. If the transition_time is 2 then
   -- the event is a dimmer event, the value with either will be 2 for a reduction or > 3
@@ -68,11 +68,16 @@ local function level_event_handler(driver, device, cmd)
   local time = cmd.body.zcl_body.transition_time.value
   print(device.label, "level_event_handler", value, time)
   if time == 7 then
-    local event = capabilities.button.button.pushed({state_change = true})
-    device:emit_component_event(device.profile.components.main, event)
-    device:emit_event(event)
+    local current = device:get_latest_state("main", "switch", "switch", "off")
+    print(device.label, "switch event", current)
+    if current == "off" then
+      device:emit_event(capabilities.button.button.on())
+    else
+      device:emit_event(capabilities.switch.switch.off())
+    end
   elseif time == 2 then
     local current = device:get_latest_state("main", "switchLevel", "level", 0)
+    print(device.label, "dimmer event", current)
     -- look up the last event which will either be 3 or some larger value
     local last_event = device:get_field(LAST_LEVEL_EVENT) or 3
     -- if the event is > than the last (or 3) then increase the switchLevel by
@@ -101,7 +106,6 @@ end
 local driver_template = {
   supported_capabilities = {
     capabilities.battery,
-    capabilities.button,
     capabilities.switchLevel,
     capabilities.switch,
     capabilities.refresh,
