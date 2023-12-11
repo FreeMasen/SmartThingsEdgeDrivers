@@ -6,12 +6,13 @@ local read_attr_response = require "st.zigbee.zcl.global_commands.read_attribute
 local Level = require "st.zigbee.zcl.clusters".Level
 local Status = require "st.zigbee.generated.types.ZclStatus"
 local Uint8 = require "st.zigbee.data_types.Uint8"
-
+local utils = require "st.utils"
 --- The goal here is to respond to the device's `Read` message with the current
 --- value of the switchLevel propery.
 ---
 --- note: this seems to not really help with the device losing its own state
-return function(device)
+return function(device, info)
+  print(utils.stringify_table(info, "read_responder", true))
   local current = device:get_latest_state("main", "switchLevel", "level", 0)
   local adjusted = math.floor((255 - 2) * (current / 100)) + 2
   local response = read_attr_response.ReadAttributeResponse({

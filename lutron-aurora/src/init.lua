@@ -1,5 +1,6 @@
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local Level = zcl_clusters.Level
+local OnOff = zcl_clusters.OnOff
 local ZigbeeDriver = require "st.zigbee"
 local capabilities = require "st.capabilities"
 local device_management = require "st.zigbee.device_management"
@@ -23,24 +24,32 @@ local function do_configure(driver, device)
   end
   device:send(device_management.build_bind_request(device, PowerConfiguration.ID, driver.environment_info.hub_zigbee_eui))
   device:send(device_management.build_bind_request(device, Level.ID, driver.environment_info.hub_zigbee_eui))
-  device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:configure_reporting(device, 30, 21600, 1))
+  device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:configure_reporting(device, 30,
+    21600, 1))
 end
 
 --- The shared logic for both `init` and `added` events.
-local function start_device(device)
-  device:emit_event(capabilities.button.numberOfButtons({ value = 1 }))
+local function start_device(driver, device)
+  if not driver.environment_info.hub_zigbee_eui then
+    return driver:call_with_delay(1, function()
+      start_device(driver, device)
+    end)
+  end
+  device:emit_event(capabilities.button.numberOfButtons({ value = 1 },
+    { visibility = { displayed = false } }))
   device:emit_event(capabilities.button.supportedButtonValues({"pushed"}, {visibility = { displayed = false }}))
   device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:read(device))
 end
 
-local function added_handler(_, device)
-  start_device(device)
+local function added_handler(driver, device)
+  start_device(driver, device)
   device:emit_event(capabilities.button.button.pushed({ state_change = false }))
   device:emit_event(capabilities.switchLevel.level(0, { state_change = false }))
 end
 
 local function init_handler(driver, device)
-  start_device(device)
+  start_device(driver, device)
+  do_configure(driver, device)
 end
 
 local function battery_perc_attr_handler(_, device, value, _)
@@ -57,9 +66,11 @@ local function level_event_handler(driver, device, cmd)
   local level_step = device.preferences.stepSize or 5
   local value = cmd.body.zcl_body.level.value
   local time = cmd.body.zcl_body.transition_time.value
-  print("level_event_handler", value, time)
+  print(device.label, "level_event_handler", value, time)
   if time == 7 then
-    device:emit_event(capabilities.button.button.pushed({stateChange = true}))
+    local event = capabilities.button.button.pushed({state_change = true})
+    device:emit_component_event(device.profile.components.main, event)
+    device:emit_event(event)
   elseif time == 2 then
     local current = device:get_latest_state("main", "switchLevel", "level", 0)
     -- look up the last event which will either be 3 or some larger value
@@ -69,16 +80,17 @@ local function level_event_handler(driver, device, cmd)
     local added = value > last_event and level_step or -level_step
     -- to guard against quick increase to decrease transitions we wait for 1 second and
     -- reset the last event level to 3
+    device:emit_event(capabilities.switchLevel.level(math.floor(utils.clamp_value(current + added, 0, 100))))
+    device:set_field(LAST_LEVEL_EVENT, value)
     driver:call_with_delay(1, function()
       device:set_field(LAST_LEVEL_EVENT, 3)
     end)
-    device:emit_event(capabilities.switchLevel.level(math.floor(utils.clamp_value(current + added, 0, 100))))
-    device:set_field(LAST_LEVEL_EVENT, value)
   end
   print("level_event_handler exit", device:get_latest_state("main", "switchLevel", "level", 0))
 end
 
 local function group_handler(driver, device, info)
+  print("group_handler", device.label, info.body.zcl_body.group_id.value)
   -- shortly after onboarding the device will send a GroupAdd event so we tell
   -- the hub to join that group. I am saving this in the device data because I feel
   -- like we should be leaving the group on device remove but that API doesn't seem to exist
@@ -108,7 +120,7 @@ local driver_template = {
         [zcl_commands.ReportAttribute.ID] = function(_driver, device, info)
           return read_responder(device)
         end
-      }
+      },
     },
     attr = {
       [PowerConfiguration.ID] = {
@@ -127,6 +139,14 @@ local driver_template = {
       [Groups.ID] = {
         [Groups.server.commands.AddGroup.ID] = group_handler,
       },
+      [OnOff.ID] = {
+        [OnOff.server.commands.On.ID] = function(...)
+          print("OnOff->On", ...)
+        end,
+        [OnOff.server.commands.Off.ID] = function(...)
+          print("OnOff->OFF", ...)
+        end,
+      }
     }
   },
 }
