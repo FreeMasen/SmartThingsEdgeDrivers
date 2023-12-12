@@ -55,6 +55,7 @@ local function battery_perc_attr_handler(_, device, value, _)
 end
 
 local function handle_on_off(device, on)
+  print("handle_on_off", device.label, level)
   if on then
     device:emit_event(capabilities.switch.switch.on())
   else
@@ -63,6 +64,9 @@ local function handle_on_off(device, on)
 end
 
 local function handle_level(device, level)
+  print("handle_level", device.label, level)
+  level = utils.clamp_value(level, 0, 100)
+  level = math.floor(level)
   device:emit_event(capabilities.switchLevel.level(level))
 end
 
@@ -93,10 +97,10 @@ local function level_event_handler(driver, device, cmd)
     -- if the event is > than the last (or 3) then increase the switchLevel by
     -- level_step, otherwise reduce it by level_step
     local added = value > last_event and level_step or -level_step
+    handle_level(device, current + added, 0, 100)
+    device:set_field(LAST_LEVEL_EVENT, value)
     -- to guard against quick increase to decrease transitions we wait for 1 second and
     -- reset the last event level to 3
-    handle_level(device, math.floor(utils.clamp_value(current + added, 0, 100)))
-    device:set_field(LAST_LEVEL_EVENT, value)
     driver:call_with_delay(1, function()
       device:set_field(LAST_LEVEL_EVENT, 3)
     end)
@@ -162,19 +166,21 @@ local driver_template = {
         end,
       }
     },
-    capability_handlers = {
-      [capabilities.switch.ID] = {
-        [capabilities.switch.commands.on.NAME] = function(_, device)
-          handle_on_off(device, true)
-        end,
-        [capabilities.switch.commands.off.NAME] = function(_, device)
-          handle_on_off(device, false)
-        end
-      },
-      [capabilities.switchLevel.ID] = {
-        [capabilities.switchLevel.commands.level.NAME] = function (_, device, args)
-        end
-      },
+  },
+  capability_handlers = {
+    [capabilities.switch.ID] = {
+      [capabilities.switch.commands.on.NAME] = function(_, device)
+        handle_on_off(device, true)
+      end,
+      [capabilities.switch.commands.off.NAME] = function(_, device)
+        handle_on_off(device, false)
+      end
+    },
+    [capabilities.switchLevel.ID] = {
+      [capabilities.switchLevel.commands.setLevel.NAME] = function (_, device, cmd)
+        print("level:", utils.stringify_table(cmd))
+        handle_level(device, cmd.args.level)
+      end,
     },
   },
 }
