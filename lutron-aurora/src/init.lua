@@ -35,15 +35,12 @@ local function start_device(driver, device)
       start_device(driver, device)
     end)
   end
-  device:emit_event(capabilities.button.numberOfButtons({ value = 1 },
-    { visibility = { displayed = false } }))
-  device:emit_event(capabilities.button.supportedButtonValues({"pushed"}, {visibility = { displayed = false }}))
   device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:read(device))
 end
 
 local function added_handler(driver, device)
   start_device(driver, device)
-  device:emit_event(capabilities.button.button.pushed({ state_change = false }))
+  device:emit_event(capabilities.switch.switch.on({ state_change = false }))
   device:emit_event(capabilities.switchLevel.level(0, { state_change = false }))
 end
 
@@ -53,7 +50,20 @@ local function init_handler(driver, device)
 end
 
 local function battery_perc_attr_handler(_, device, value, _)
-    device:emit_event(capabilities.battery.battery(utils.clamp_value(math.floor(value.value / 2), 0, 100)))
+  device:emit_event(capabilities.battery.battery(utils.clamp_value(math.floor(value.value / 2), 0,
+    100)))
+end
+
+local function handle_on_off(device, on)
+  if on then
+    device:emit_event(capabilities.switch.switch.on())
+  else
+    device:emit_event(capabilities.switch.switch.off())
+  end
+end
+
+local function handle_level(device, level)
+  device:emit_event(capabilities.switchLevel.level(level))
 end
 
 local function level_event_handler(driver, device, cmd)
@@ -71,9 +81,9 @@ local function level_event_handler(driver, device, cmd)
     local current = device:get_latest_state("main", "switch", "switch", "off")
     print(device.label, "switch event", current)
     if current == "off" then
-      device:emit_event(capabilities.button.button.on())
+      handle_on_off(device, true)
     else
-      device:emit_event(capabilities.switch.switch.off())
+      handle_on_off(device, false)
     end
   elseif time == 2 then
     local current = device:get_latest_state("main", "switchLevel", "level", 0)
@@ -85,7 +95,7 @@ local function level_event_handler(driver, device, cmd)
     local added = value > last_event and level_step or -level_step
     -- to guard against quick increase to decrease transitions we wait for 1 second and
     -- reset the last event level to 3
-    device:emit_event(capabilities.switchLevel.level(math.floor(utils.clamp_value(current + added, 0, 100))))
+    handle_level(device, math.floor(utils.clamp_value(current + added, 0, 100)))
     device:set_field(LAST_LEVEL_EVENT, value)
     driver:call_with_delay(1, function()
       device:set_field(LAST_LEVEL_EVENT, 3)
@@ -151,7 +161,21 @@ local driver_template = {
           print("OnOff->OFF", ...)
         end,
       }
-    }
+    },
+    capability_handlers = {
+      [capabilities.switch.ID] = {
+        [capabilities.switch.commands.on.NAME] = function(_, device)
+          handle_on_off(device, true)
+        end,
+        [capabilities.switch.commands.off.NAME] = function(_, device)
+          handle_on_off(device, false)
+        end
+      },
+      [capabilities.switchLevel.ID] = {
+        [capabilities.switchLevel.commands.level.NAME] = function (_, device, args)
+        end
+      },
+    },
   },
 }
 
