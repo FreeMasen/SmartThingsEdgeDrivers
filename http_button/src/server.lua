@@ -37,22 +37,21 @@ local function setup_multicast_disocvery(server)
         while true do
             local ip = '239.255.255.250'
             local port = 9887
-            local sock = cosock.socket.udp()
+            local sock = assert(cosock.socket.udp())
             print("setting up socket")
             assert(sock:setoption('reuseaddr', true))
             assert(sock:setsockname(ip, port))
             assert(sock:setoption('ip-add-membership', {multiaddr = ip, interface = '0.0.0.0'}))
             assert(sock:setoption('ip-multicast-loop', false))
-            assert(sock:sendto(gen_url(server), ip, port))
             sock:settimeout(60)
             while true do
                 print("receiving from")
                 local bytes, ip_or_err, rport = sock:receivefrom()
                 print("recv:", bytes, ip_or_err, rport)
-                if ip_or_err == "timeout" or bytes == "whereareyou" then
-                    print("sending broadcast")
-                    assert(sock:sendto(gen_url(server), ip, port))
-                else
+                if bytes == "whereareyou" then
+                    print("sending unicast")
+                    assert(sock:sendto(gen_url(server), ip_or_err, rport))
+                elseif not bytes and ip_or_err ~= "timeout" then
                     print("Error in multicast listener: ", ip_or_err)
                     break
                 end
