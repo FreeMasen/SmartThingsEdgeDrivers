@@ -1,0 +1,6 @@
+name: myq-proxy-garagedoor.v1
+components:
+  - id: main
+    capabilities:
+    - id: doorControl
+      version: 1

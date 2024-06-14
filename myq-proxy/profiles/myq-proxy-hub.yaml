@@ -1,0 +1,4 @@
+name: myq-proxy-hub.v1
+components:
+  - id: main
+    capabilities: []
