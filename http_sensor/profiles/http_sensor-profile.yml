@@ -1,0 +1,10 @@
+name: http_sensor.v1
+components:
+- id: main
+  capabilities:
+  - id: contactSensor
+    version: 1
+  - id: temperatureMeasurement
+    version: 1
+  - id: airQualitySensor
+    version: 1

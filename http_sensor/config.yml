@@ -1,0 +1,5 @@
+name: 'http_sensor'
+packageKey: 'http_sensor'
+permissions:
+  lan: {}
+  discovery: {}

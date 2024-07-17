@@ -1,0 +1,14 @@
+[
+    {
+        "device_name": "test-device1",
+        "device_id": "test-device1",
+        "state": {
+            "contact": "closed",
+            "temp": {
+                "value": 50,
+                "unit": "C"
+            },
+            "air": 50
+        }
+    }
+]

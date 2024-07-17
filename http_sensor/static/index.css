@@ -1,0 +1,166 @@
+:root {
+    /*Grey-100*/
+    --light-grey: #EEEEEE;
+    /*Grey-600*/
+    --grey: #757575;
+    /*Grey-900*/
+    --dark-grey: #1F1F1F;
+    /*Blue-500*/
+    --blue: #0790ED;
+    /*Teal-500*/
+    --teal: #00B3E3;
+    /*Red-500*/
+    --red: #FF4337;
+    /*Yellow-500*/
+    --yellow: #FFB546;
+    /*Green-500*/
+    --green: #3DC270;
+}
+
+html,
+body {
+    padding: 0;
+    margin: 0;
+    border: 0;
+}
+
+* {
+    font-family: sans-serif;
+}
+
+button {
+    margin-top: 10px;
+    height: 30px;
+    line-height: 30px;
+    text-align: center;
+    padding: 0 5px;
+    cursor: pointer;
+    background-color: var(--blue);
+    color: #fff;
+    border: 0;
+    font-size: 13pt;
+    border-radius: 8px;
+
+}
+
+header {
+    text-align: center;
+    width: 100%;
+    color: #fff;
+    background-color: var(--blue);
+    margin: 0 0 8px 0;
+    padding: 10px 0;
+}
+
+header>h1 {
+    margin: 0;
+}
+
+#new-button-container {
+    margin: auto;
+    width: 250px;
+    display: flex;
+}
+
+#new-button-container>button {
+    width: 200px;
+    margin: auto;
+    height: 50px;
+}
+
+#button-list-container {
+    display: flex;
+    flex-flow: row wrap;
+    align-items: center;
+    margin: auto;
+    justify-content: space-between;
+    max-width: 800px;
+}
+
+.button-container {
+    display: flex;
+    flex-flow: column;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid var(--blue);
+    margin-top: 10px;
+    border: 1px solid var(--blue);
+    padding: 5px;
+    border-radius: 5px;
+    margin-top: 5px;
+    position: relative;
+}
+
+.device {
+    display: flex;
+    flex-flow: column;
+    width: 175px;
+    border: 1px solid var(--blue);
+    border-radius: 5px;
+    padding: 2px;
+}
+
+
+
+.device .title {
+    font-size: 15pt;
+    background: var(--blue);
+    width: 100%;
+    text-align: center;
+    color: var(--light-grey);
+    padding-top: 5px;
+    border-radius: 4px;
+}
+
+.device .states {
+    display: flex;
+    flex-flow: column;
+    align-content: start;
+    align-items: start;
+}
+
+.contact-state {
+    width: 100%;
+}
+
+.sensor-name {
+    font-weight: bold;
+    margin-top: 5px;
+    display: inline-block;
+}
+
+.contact-state .radio-group {
+    display: flex;
+    flex-flow: row;
+    align-items: start;
+    justify-content: space-between;
+}
+
+.temp-state {
+    width: 100%;
+    flex-flow: column;
+    display: flex;
+    justify-content: space-between;
+}
+
+.temp-info {
+    display: flex;
+    flex-flow: row;
+    width: 100%;
+    justify-content: space-between;
+}
+
+.temp-input-container input {
+    width: 50px;
+}
+
+.temp-info .radio-group {
+    width: 75px;
+    display: flex;
+    flex-flow: row;
+
+}
+
+.air-state input {
+    width: 50px;
+}
