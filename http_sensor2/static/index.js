@@ -257,8 +257,8 @@ async function get_all_devices() {
             console.error(`Error from sse`, e);
             sse.close()
             document.body.classList.add("error");
-            let header = document.getElementsByTagName("header")[0];
-            header.innerText += " URL Expired"
+            let header = document.querySelector("header h1")[0];
+            header.firstElementChild.innerText += " URL Expired"
         });
     })
 })();

@@ -258,7 +258,7 @@ async function get_all_devices() {
             sse.close()
             document.body.classList.add("error");
             let header = document.getElementsByTagName("header")[0];
-            header.innerText += " URL Expired"
+            header.firstElementChild.innerText += " URL Expired"
         });
     })
 })();

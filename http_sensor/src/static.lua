@@ -56,10 +56,9 @@ header {
     padding: 10px 0;
 }
 
-body.error  header, 
-body.error  button,
-body.error .title
-{
+body.error header,
+body.error button,
+body.error .title {
     background-color: var(--red) !important;
     color: var(--dark-grey) !important;
 }
@@ -68,7 +67,7 @@ body.error .device {
     border-color: var(--red);
 }
 
-header > h1 {
+header>h1 {
     margin: 0;
 }
 
@@ -451,7 +450,7 @@ local function html()
 
 <body>
     <header>
-        <h1 style="text-align:center">HTTP 2ensor</h1>
+        <h1 style="text-align:center">HTTP Sensor</h1>
     </header>
     <div id="new-button-container">
         <button id="new-button">Add Device</button>
