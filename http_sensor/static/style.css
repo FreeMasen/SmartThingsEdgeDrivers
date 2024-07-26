@@ -52,6 +52,17 @@ header {
     padding: 10px 0;
 }
 
+body.error header,
+body.error button,
+body.error .title {
+    background-color: var(--red) !important;
+    color: var(--dark-grey) !important;
+}
+
+body.error .device {
+    border-color: var(--red);
+}
+
 header>h1 {
     margin: 0;
 }
@@ -77,20 +88,6 @@ header>h1 {
     max-width: 800px;
 }
 
-.button-container {
-    display: flex;
-    flex-flow: column;
-    justify-content: space-between;
-    align-items: center;
-    border: 1px solid var(--blue);
-    margin-top: 10px;
-    border: 1px solid var(--blue);
-    padding: 5px;
-    border-radius: 5px;
-    margin-top: 5px;
-    position: relative;
-}
-
 .device {
     display: flex;
     flex-flow: column;
@@ -98,9 +95,8 @@ header>h1 {
     border: 1px solid var(--blue);
     border-radius: 5px;
     padding: 2px;
+    margin-top: 5px;
 }
-
-
 
 .device .title {
     font-size: 15pt;

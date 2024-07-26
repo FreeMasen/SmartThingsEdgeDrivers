@@ -14,15 +14,18 @@ local function add_sensor_device(driver, device_number, parent_device_id)
         local device_list = driver.device_api.get_device_list()
         device_number = #device_list
     end
-    local device_name = 'Sensor ' .. device_number
+    local device_name = '2ensor ' .. device_number
     log.debug('adding device ' .. device_name)
-    local device_id = utils.generate_uuid_v4()
+    local device_id
+    for i=1,math.random(0, 15) do
+        device_id = utils.generate_uuid_v4()
+    end
     local device_info = {
         type = 'LAN',
         deviceNetworkId = device_id,
         label = device_name,
         parent_device_id = parent_device_id,
-        profileReference = 'http_sensor.v1',
+        profileReference = 'http_sensor2.v1',
         vendorProvidedName = device_name,
     }
     local device_info_json = json.encode(device_info)
@@ -31,19 +34,19 @@ local function add_sensor_device(driver, device_number, parent_device_id)
         log.debug('successfully created device')
         return device_name, device_id
     end
-    log.error(string.format('unsuccessful create_device (sensor) %s', msg))
+    log.error(string.format('unsuccessful create_device %s', msg))
     return nil, nil, msg
 end
 
 local function add_bridge_device(driver)
     log.trace('add_bridge_device')
     local device_id = utils.generate_uuid_v4()
-    local device_name = "HTTP Sensor Bridge"
+    local device_name = "HTTP 2ensor Bridge"
     local device_info = {
         type = 'LAN',
         deviceNetworkId = device_id,
         label = device_name,
-        profileReference = 'http_sensor_bridge.v1',
+        profileReference = 'http_sensor_bridge2.v1',
         vendorProvidedName = device_name,
     }
     local device_info_json = json.encode(device_info)
@@ -52,7 +55,7 @@ local function add_bridge_device(driver)
         log.debug('successfully created device')
         return device_name, device_id
     end
-    log.error(string.format('unsuccessful create_device (bridge) %s', msg))
+    log.error(string.format('unsuccessful create_device %s', msg))
     return nil, nil, msg
 end
 

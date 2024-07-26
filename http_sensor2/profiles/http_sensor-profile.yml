@@ -1,4 +1,4 @@
-name: http_sensor.v1
+name: http_sensor2.v1
 components:
 - id: main
   capabilities:

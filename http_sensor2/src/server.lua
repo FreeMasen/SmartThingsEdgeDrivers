@@ -142,7 +142,7 @@ return function(driver)
       driver.bridge_id)
     if err_msg ~= nil then
       log.error('error creating new device ' .. err_msg)
-      res:set_status(503):send('Failed to add new device')
+      res:set_status(503):send('Failed to add new device ')
       return
     end
     res:send(dkjson.encode({

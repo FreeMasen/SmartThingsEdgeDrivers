@@ -27,19 +27,19 @@ append_line() {
 }
 
 append_line ""
-append_line "function css()"
+append_line "local function css()"
 append_line "  return [["
 echo "$CSS" >> $OUT_FILE
 append_line "  ]]"
 append_line "end"
 append_line ""
-append_line "function js()"
+append_line "local function js()"
 append_line "  return [["
 echo "$JS" >> $OUT_FILE
 append_line "  ]]"
 append_line "end"
 append_line ""
-append_line "function html()"
+append_line "local function html()"
 append_line "  return [["
 echo "$HTML" >> $OUT_FILE
 append_line "  ]]"
