@@ -178,6 +178,15 @@ const NEW_BUTTON_ID = 'new-button';
 const DEVICE_TEMPLATE = document.getElementById("device-template");
 let known_buttons = [];
 
+
+let PROP = Object.freeze({
+    CONTACT: "contact",
+    TEMP: "temp",
+    AIR: "air",
+    SWITCH: "switch",
+    LEVEL: "level",
+});
+
 let state_update_timers = {
 
 }
@@ -285,14 +294,14 @@ function update_device_card(element, info, register_handlers) {
     let switch_level = element.querySelector(".switch-level");
     switch_level.value = info.state.switch_level;
     if (register_handlers) {
-        temp_value.addEventListener("change", () => handle_change(device_id));
-        temp_c.addEventListener("change", () => handle_change(device_id));
-        air_value.addEventListener("change", () => handle_change(device_id));
-        contact_open.parentElement.addEventListener("click", () => handle_change(device_id));
-        contact_closed.parentElement.addEventListener("click", () => handle_change(device_id));
-        switch_state_on.addEventListener("change", () => handle_change(device_id));
-        switch_state_off.addEventListener("change", () => handle_change(device_id));
-        switch_level.addEventListener("change", () => handle_change(device_id));
+        temp_value.addEventListener("change", () => handle_change(device_id, PROP.TEMP));
+        temp_c.addEventListener("change", () => handle_change(device_id, PROP.TEMP));
+        air_value.addEventListener("change", () => handle_change(device_id, PROP.AIR));
+        contact_open.parentElement.addEventListener("click", () => handle_change(device_id, PROP.CONTACT));
+        contact_closed.parentElement.addEventListener("click", () => handle_change(device_id, PROP.CONTACT));
+        switch_state_on.parentElement.addEventListener("click", () => handle_change(device_id, PROP.SWITCH));
+        switch_state_off.parentElement.addEventListener("click", () => handle_change(device_id, PROP.SWITCH));
+        switch_level.addEventListener("change", () => handle_change(device_id, PROP.LEVEL));
     }
 }
 
@@ -328,40 +337,64 @@ function get_float_value(div, selector) {
 /**
  * 
  * @param {string} device_id 
+ * @param {string} prop The property that changed
  */
-function handle_change(device_id) {
-    if (!!state_update_timers[device_id]) {
-        clearTimeout(state_update_timers[device_id]);
+function handle_change(device_id, prop) {
+    let existing_timer = state_update_timers[device_id];
+    let props = [prop]
+    if (!!existing_timer) {
+        clearTimeout(existing_timer.timer);
+        props.push(...existing_timer.props);
+        existing_timer[device_id] = null;
     }
-    state_update_timers[device_id] = setTimeout(() => {
-        send_state_update(device_id);
-    }, 300);
+    let timer = setTimeout(() => send_state_update(device_id, props), 300);
+    state_update_timers[device_id] = {
+        timer,
+        props,
+    };
 }
 
 /**
  * 
- * @param {string} device_id 
+ * @param {string} device_id
+ * @param {string[]} properties 
  */
-async function send_state_update(device_id) {
+async function send_state_update(device_id, properties) {
     let device_card = document.getElementById(device_id);
-    let contact = get_binary_value(device_card, ".contact-open", "open", "closed");
-    let temp_value = get_float_value(device_card, ".temp-value");
-    let temp_unit = get_binary_value(device_card, ".temp-f", "F", "C");
-    let air = get_float_value(device_card, ".air-value");
-    let sw = get_binary_value(device_card, ".switch-on", "on", "off");
-    let level = get_float_value(device_card, ".switch-level");
+    let props = properties || ["contact", "temp", "air", "switch", "level"];
+    let state = {}
+    for (let prop of props) {
+        switch (prop) {
+            case "contact": {
+                state.contact = get_binary_value(device_card, ".contact-open", "open", "closed");
+                break;
+            }
+            case "temp": {
+                state.temp = {
+                    value: get_float_value(device_card, ".temp-value"),
+                    unit: get_binary_value(device_card, ".temp-f", "F", "C"),
+                };
+                break;
+            }
+            case "air": {
+                state.air = get_float_value(device_card, ".air-value");
+                break;
+            }
+            case "switch": {
+                state["switch"] = get_binary_value(device_card, ".switch-on", "on", "off");
+                break;
+            }
+            case "level": {
+                state.level = get_float_value(device_card, ".switch-level");
+                break;
+            }
+            default:
+                console.error("Invalid prop, skipping", prop)
+        }
+    }
     let resp = await make_request("/device_state", "PUT", {
         device_id,
-        state: {
-            contact,
-            temp: {
-                value: temp_value,
-                unit: temp_unit,
-            },
-            air,
-            ["switch"]: sw,
-            level,
-        }
+        state,
     });
     if (resp.error) {
         console.error("Error making request", resp.error, resp.body);
@@ -429,8 +462,8 @@ async function get_all_devices() {
             console.error(`Error from sse`, e);
             sse.close()
             document.body.classList.add("error");
-            let header = document.getElementsByTagName("header")[0];
-            header.innerText += " URL Expired"
+            let header = document.querySelector("header h1")[0];
+            header.firstElementChild.innerText += " URL Expired"
         });
     })
 })();

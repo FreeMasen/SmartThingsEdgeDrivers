@@ -120,6 +120,12 @@ return function(driver)
     res:send(static:css())
   end)
 
+  server:get("/device/:device_id", function(req, res)
+    local dev = lux.Error.assert(driver:get_device_info(req.params.device_id))
+    local state = lux.Error.assert(driver:get_sensor_state(dev))
+    res:send(dkjson.encode(state))
+  end)
+
   server:get('/info', function(req, res)
     local devices_list = driver:get_sensor_states()
     res:send(dkjson.encode(devices_list))
@@ -162,7 +168,9 @@ return function(driver)
       res:set_status(404):send('device not found')
       return
     end
+    print("emitting state")
     driver:emit_state(device, req.body.state)
+    print("replying with raw body")
     res:send(req.raw_body)
   end)
 

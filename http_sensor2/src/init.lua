@@ -114,17 +114,14 @@ local driver = Driver(require("driver_name"), {
 })
 
 function Driver:send_all_states_to_sse(device, supp)
-  local state = self:get_state_object(device)
-  for k,v in pairs(supp or {}) do
-    state[k] = v
-  end
   self:send_to_all_sse({
     event = "update",
     device_id = device.id,
     device_name = device.label,
-    state = state,
+    state = supp or self:get_state_object(device)
   })
 end
+
 
 function Driver:send_to_all_sse(event)
   local not_closed = {}
@@ -140,40 +137,42 @@ function Driver:send_to_all_sse(event)
 end
 
 function Driver:get_state_object(device)
-    local temp = device:get_latest_state("main", TemperatureMeasurement.ID,
-      TemperatureMeasurement.temperature.NAME)
-    if type(temp) == "number" then
-        temp = {
-            value = temp,
-            unit = "F",
-        }
-    end
-    
-    local ret = {
-      temp = temp,
-      contact = device:get_latest_state("main", ContactSensor.ID, ContactSensor.contact.NAME),
-      air = device:get_latest_state("main", AqSensor.ID, AqSensor.airQuality.NAME),
-      switch = device:get_latest_state("main", capabilities.switch.ID, capabilities.switch.switch.NAME),
-      switch_level = device:get_latest_state("main", capabilities.switchLevel.ID, capabilities.switchLevel.NAME),
-    }
-    local expected_props = {
+  print("Driver:get_state_object")
+  local temp = device:get_latest_state("main", TemperatureMeasurement.ID,
+    TemperatureMeasurement.temperature.NAME)
+  if type(temp) == "number" then
       temp = {
-            value = 50,
-            unit = "F",
-        },
-      contact = "closed",
-      air = 50,
-      switch = "off",
-      switch_level = 50,
-    }
-    for prop, default in ipairs(expected_props) do
-      print(prop, ret[prop], default)
-      if ret[prop] == nil then
-        print(string.format("WARNING %q was nil, setting to default"))
-        ret[prop] = default
-      end
+          value = temp,
+          unit = "F",
+      }
+  end
+  
+  local ret = {
+    temp = temp,
+    contact = device:get_latest_state("main", ContactSensor.ID, ContactSensor.contact.NAME),
+    air = device:get_latest_state("main", AqSensor.ID, AqSensor.airQuality.NAME),
+    switch = device:get_latest_state("main", capabilities.switch.ID, capabilities.switch.switch.NAME),
+    switch_level = device:get_latest_state("main", capabilities.switchLevel.ID, capabilities.switchLevel.NAME),
+  }
+  local expected_props = {
+    temp = {
+          value = 50,
+          unit = "F",
+      },
+    contact = "closed",
+    air = 50,
+    switch = "off",
+    switch_level = 50,
+  }
+  for prop, default in pairs(expected_props) do
+    print(prop, ret[prop], default)
+    if ret[prop] == nil then
+      print(string.format("WARNING %q was nil, setting to default", prop))
+      ret[prop] = default
     end
-    return ret
+  end
+  print("returning state", utils.stringify_table(ret))
+  return ret
 end
 
 function Driver:emit_state(device, state)
@@ -184,12 +183,18 @@ function Driver:emit_state(device, state)
 end
 
 function Driver:emit_sensor_state(device, state)
-  device:emit_event(TemperatureMeasurement.temperature(state.temp or {
-    value = 60,
-    unit = "F"
-  }))
-  device:emit_event(ContactSensor.contact(state.contact or "closed"))
-  device:emit_event(AqSensor.airQuality(state.air or 50))
+  if state.temp then
+    device:emit_event(TemperatureMeasurement.temperature(state.temp or {
+      value = 60,
+      unit = "F"
+    }))
+  end
+  if state.contact then
+    device:emit_event(ContactSensor.contact(state.contact or "closed"))
+  end
+  if state.air then
+    device:emit_event(AqSensor.airQuality(state.air or 50))
+  end
 end
 
 function Driver:emit_switch_state(device, state)
@@ -197,7 +202,7 @@ function Driver:emit_switch_state(device, state)
   if state.switch == "on" then
     print("emitting on for ", device.label)
     device:emit_event(capabilities.switch.switch.on())
-  else
+  elseif state.switch == "off" then
     print("emitting off for ", device.label)
     device:emit_event(capabilities.switch.switch.off())
   end
@@ -233,6 +238,21 @@ function Driver:get_sensor_states()
     end
   end
   return devices_list
+end
+
+function Driver:get_sensor_state(device)
+  print("Driver:get_sensor_state", device.label or device.id)
+  if is_bridge(device) then
+    print("device is a bridge!")
+    return nil, "device is bridge"
+  end
+  print("getting state object")
+  local state = self:get_state_object(device)
+  return {
+    device_id = device.id,
+    device_name = device.label,
+    state = state
+  }
 end
 
 function driver:emit_current_url()

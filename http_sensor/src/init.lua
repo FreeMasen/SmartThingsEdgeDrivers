@@ -21,7 +21,7 @@ local ContactSensor = capabilities.contactSensor
 local AqSensor = capabilities.airQualitySensor
 
 local function is_bridge(device)
-  return device:supports_capability_by_id(targetCountId)
+    return device:supports_capability_by_id(targetCountId)
 end
 
 local function device_init(driver, device)
@@ -38,7 +38,7 @@ local function device_init(driver, device)
       event = "init",
       device_id = device.id,
       device_name = device.label,
-      state = state
+      state = state,
     })
   end
 
@@ -48,7 +48,7 @@ local function device_removed(driver, device)
   log.trace('Removed http_sensor ' .. device.id)
   driver:send_to_all_sse({
     event = "removed",
-    device_id = device.id
+    device_id = device.id,
   })
 end
 
@@ -57,26 +57,26 @@ local function info_changed(driver, device, event, ...)
 end
 
 local function do_refresh(driver, device)
-  -- If this is a sensor device, re-emit the stored state
-  if not is_bridge(device) then
-    device_init(driver, device)
-    return
-  end
-  -- If this is a bridge device, re-emit the state for all devices
-  for _, device in ipairs(driver:get_devices()) do
+    -- If this is a sensor device, re-emit the stored state
     if not is_bridge(device) then
-      device_init(driver, device)
+        device_init(driver, device)
+        return
     end
-  end
+    -- If this is a bridge device, re-emit the state for all devices
+    for _,device in ipairs(driver:get_devices()) do
+        if not is_bridge(device) then
+            device_init(driver, device)
+        end
+    end
 end
 
-local function do_set_level(driver, device, args)
+local function  do_set_level(driver, device, args)
   print("do_set_level", device.id, utils.stringify_table(args, "args", true))
   device:emit_event(capabilities.switchLevel.level(args.args.level))
-  driver:send_all_states_to_sse(device, {
-    switch_level = args.args.level
-  })
+  driver:send_all_states_to_sse(device, {switch_level = args.args.level})
 end
+
+
 
 local driver = Driver(require("driver_name"), {
   lifecycle_handlers = {
@@ -97,38 +97,31 @@ local driver = Driver(require("driver_name"), {
       end
     },
     [capabilities.refresh.ID] = {
-      [capabilities.refresh.commands.refresh.NAME] = do_refresh
+      [capabilities.refresh.commands.refresh.NAME] = do_refresh,
     },
     [capabilities.switch.ID] = {
       [capabilities.switch.commands.on.NAME] = function(driver, device)
-        driver:emit_state(device, {
-          switch = "on"
-        })
+        driver:emit_state(device, {switch = "on"})
       end,
       [capabilities.switch.commands.off.NAME] = function(driver, device)
-        driver:emit_state(device, {
-          switch = "off"
-        })
-      end
+        driver:emit_state(device, {switch = "off"})
+      end,
     },
     [capabilities.switchLevel.ID] = {
-      [capabilities.switchLevel.commands.setLevel.NAME] = do_set_level
+      [capabilities.switchLevel.commands.setLevel.NAME] = do_set_level,
     }
   }
 })
 
 function Driver:send_all_states_to_sse(device, supp)
-  local state = self:get_state_object(device)
-  for k, v in pairs(supp or {}) do
-    state[k] = v
-  end
   self:send_to_all_sse({
     event = "update",
     device_id = device.id,
     device_name = device.label,
-    state = state
+    state = supp or self:get_state_object(device)
   })
 end
+
 
 function Driver:send_to_all_sse(event)
   local not_closed = {}
@@ -144,40 +137,41 @@ function Driver:send_to_all_sse(event)
 end
 
 function Driver:get_state_object(device)
+  print("Driver:get_state_object")
   local temp = device:get_latest_state("main", TemperatureMeasurement.ID,
     TemperatureMeasurement.temperature.NAME)
   if type(temp) == "number" then
-    temp = {
-      value = temp,
-      unit = "F"
-    }
+      temp = {
+          value = temp,
+          unit = "F",
+      }
   end
-
+  
   local ret = {
     temp = temp,
     contact = device:get_latest_state("main", ContactSensor.ID, ContactSensor.contact.NAME),
     air = device:get_latest_state("main", AqSensor.ID, AqSensor.airQuality.NAME),
     switch = device:get_latest_state("main", capabilities.switch.ID, capabilities.switch.switch.NAME),
-    switch_level = device:get_latest_state("main", capabilities.switchLevel.ID,
-      capabilities.switchLevel.NAME)
+    switch_level = device:get_latest_state("main", capabilities.switchLevel.ID, capabilities.switchLevel.NAME),
   }
   local expected_props = {
     temp = {
-      value = 50,
-      unit = "F"
-    },
+          value = 50,
+          unit = "F",
+      },
     contact = "closed",
     air = 50,
     switch = "off",
-    switch_level = 50
+    switch_level = 50,
   }
-  for prop, default in ipairs(expected_props) do
+  for prop, default in pairs(expected_props) do
     print(prop, ret[prop], default)
     if ret[prop] == nil then
-      print(string.format("WARNING %q was nil, setting to default"))
+      print(string.format("WARNING %q was nil, setting to default", prop))
       ret[prop] = default
     end
   end
+  print("returning state", utils.stringify_table(ret))
   return ret
 end
 
@@ -189,12 +183,18 @@ function Driver:emit_state(device, state)
 end
 
 function Driver:emit_sensor_state(device, state)
-  device:emit_event(TemperatureMeasurement.temperature(state.temp or {
-    value = 60,
-    unit = "F"
-  }))
-  device:emit_event(ContactSensor.contact(state.contact or "closed"))
-  device:emit_event(AqSensor.airQuality(state.air or 50))
+  if state.temp then
+    device:emit_event(TemperatureMeasurement.temperature(state.temp or {
+      value = 60,
+      unit = "F"
+    }))
+  end
+  if state.contact then
+    device:emit_event(ContactSensor.contact(state.contact or "closed"))
+  end
+  if state.air then
+    device:emit_event(AqSensor.airQuality(state.air or 50))
+  end
 end
 
 function Driver:emit_switch_state(device, state)
@@ -202,14 +202,14 @@ function Driver:emit_switch_state(device, state)
   if state.switch == "on" then
     print("emitting on for ", device.label)
     device:emit_event(capabilities.switch.switch.on())
-  else
+  elseif state.switch == "off" then
     print("emitting off for ", device.label)
     device:emit_event(capabilities.switch.switch.off())
   end
   if state.level then
     print("emitting level", state.level, " for ", device.label)
     device:emit_event(capabilities.switchLevel.level(state.level))
-  end
+  end 
 end
 
 function Driver:get_url()
@@ -240,6 +240,21 @@ function Driver:get_sensor_states()
   return devices_list
 end
 
+function Driver:get_sensor_state(device)
+  print("Driver:get_sensor_state", device.label or device.id)
+  if is_bridge(device) then
+    print("device is a bridge!")
+    return nil, "device is bridge"
+  end
+  print("getting state object")
+  local state = self:get_state_object(device)
+  return {
+    device_id = device.id,
+    device_name = device.label,
+    state = state
+  }
+end
+
 function driver:emit_current_url()
   local url = self:get_url()
   local bridge
@@ -263,6 +278,7 @@ driver:call_with_delay(0, function(driver)
     cosock.socket.sleep(10)
   end
 end)
+
 
 server(driver)
 

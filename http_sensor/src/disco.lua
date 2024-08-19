@@ -16,7 +16,7 @@ local function add_sensor_device(driver, device_number, parent_device_id)
     end
     local device_name = 'Sensor ' .. device_number
     log.debug('adding device ' .. device_name)
-    local device_id = utils.generate_uuid_v4()
+    local device_id = utils.generate_uuid_v4() .. tostring(device_number) .. '2'
     local device_info = {
         type = 'LAN',
         deviceNetworkId = device_id,
