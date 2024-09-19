@@ -1,0 +1,12 @@
+dashboard:
+  states:
+    - label: '{{driverName.value}}'
+  actions: []
+  basicPlus: []
+detailView:
+  - label: Driver Name
+    displayType: state
+    state:
+      label: '{{driverName.value}}'
+id: honestadmin11679.driverName
+version: 1

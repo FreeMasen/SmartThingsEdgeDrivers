@@ -1,0 +1,5 @@
+name: driver-name
+packageKey: driver-name
+permissions:
+  lan: {}
+  discovery: {}

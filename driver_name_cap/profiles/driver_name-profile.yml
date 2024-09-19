@@ -1,0 +1,6 @@
+name: driver_name.v1
+components:
+- id: main
+  capabilities:
+  - id: honestadmin11679.driverName
+    version: 1
