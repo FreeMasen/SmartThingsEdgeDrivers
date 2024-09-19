@@ -11,10 +11,7 @@ local driverName = capabilities[driverNameID]
 -- These handlers are primarily to make the log traffic
 -- as chatty as possible
 local function device_added(driver, device)
-    local url = driver:get_url()
-    if url then
-        device:emit_event(driverName.driverName(driver.NAME))
-    end
+    device:emit_event(driverName.driverName(driver.NAME))
     log.trace('Added ' .. device.id)
 end
 
