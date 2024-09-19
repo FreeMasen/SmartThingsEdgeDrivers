@@ -40,7 +40,7 @@ local function add_device(driver, device_number)
         type = 'LAN',
         deviceNetworkId = device_id,
         label = device_name,
-        profileReference = 'http_button.v1',
+        profileReference = 'driver_name.v1',
         vendorProvidedName = device_name,
     }
     local device_info_json = json.encode(device_info)
