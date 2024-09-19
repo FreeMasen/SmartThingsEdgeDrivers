@@ -3,7 +3,6 @@ local Driver = require 'st.driver'
 local log = require 'log'
 
 local discovery = require 'disco'
-local server = require 'server'
 local utils = require 'st.utils'
 
 local driverNameID = "honestadmin11679.driverName"
