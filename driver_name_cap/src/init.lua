@@ -16,10 +16,7 @@ local function device_added(driver, device)
 end
 
 local function device_init(driver, device)
-    local url = driver:get_url()
-    if url then
-        device:emit_event(driverName.currentUrl(url))
-    end
+    device:emit_event(driverName.driverName(driver.NAME))
     log.trace('Init\'d ' .. device.id)
 end
 
