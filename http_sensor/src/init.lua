@@ -19,9 +19,17 @@ local targetCount = capabilities[targetCountId]
 local TemperatureMeasurement = capabilities.temperatureMeasurement
 local ContactSensor = capabilities.contactSensor
 local AqSensor = capabilities.airQualitySensor
+local ColorTemp = capabilities.colorTemperature
 
 local function is_bridge(device)
     return device:supports_capability_by_id(targetCountId)
+end
+
+local function sensor_profile_name(device)
+  if device:supports_capability_by_id(ColorTemp.ID) then
+    return "http_sensor-ext.v1"
+  end
+  return "http_sensor.v1"
 end
 
 local function device_init(driver, device)
@@ -52,8 +60,16 @@ local function device_removed(driver, device)
   })
 end
 
-local function info_changed(driver, device, event, ...)
-  log.trace('Info Changed ', device.id, event, ...)
+
+local function info_changed(driver, device, event, args)
+  log.trace('Info Changed ', device.id, args.old_st_store.profile.id, device.profile.id)
+  -- Check if the old profile is the same as the new profile by ID, note that these
+  -- id values do not have the same ID value as `st deviceprofile`...
+  if args.old_st_store.profile.id ~= device.profile.id then
+    local event = driver:get_sensor_state(device)
+    event.event = "profile"
+    driver:send_to_all_sse(event)
+  end
 end
 
 local function do_refresh(driver, device)
@@ -76,7 +92,11 @@ local function  do_set_level(driver, device, args)
   driver:send_all_states_to_sse(device, {switch_level = args.args.level})
 end
 
-
+local function  set_color_temp_handler(driver, device, args)
+  print("set_color_temp_handler", device.id, utils.stringify_table(args, "args", true))
+  device:emit_event(capabilities.colorTemperature.colorTemperature(args.args.temp))
+  -- driver:send_all_states_to_sse(device, {switch_level = args.args.level})
+end
 
 local driver = Driver(require("driver_name"), {
   lifecycle_handlers = {
@@ -109,7 +129,10 @@ local driver = Driver(require("driver_name"), {
     },
     [capabilities.switchLevel.ID] = {
       [capabilities.switchLevel.commands.setLevel.NAME] = do_set_level,
-    }
+    },
+    [capabilities.colorTemperature.ID] = {
+      [capabilities.colorTemperature.commands.setColorTemperature.NAME] = set_color_temp_handler,
+    },
   }
 })
 
@@ -118,6 +141,7 @@ function Driver:send_all_states_to_sse(device, supp)
     event = "update",
     device_id = device.id,
     device_name = device.label,
+    profile = sensor_profile_name(device),
     state = supp or self:get_state_object(device)
   })
 end
@@ -154,6 +178,10 @@ function Driver:get_state_object(device)
     switch = device:get_latest_state("main", capabilities.switch.ID, capabilities.switch.switch.NAME),
     switch_level = device:get_latest_state("main", capabilities.switchLevel.ID, capabilities.switchLevel.NAME),
   }
+  local needs_color_temp = device:supports_capability_by_id(ColorTemp.ID)
+  if needs_color_temp then
+    ret.color_emp = device:get_latest_state("main", ColorTemp.ID, ColorTemp.colorTemperature.NAME)
+  end
   local expected_props = {
     temp = {
           value = 50,
@@ -164,8 +192,10 @@ function Driver:get_state_object(device)
     switch = "off",
     switch_level = 50,
   }
+  if needs_color_temp then
+    expected_props.color_temp = 1
+  end
   for prop, default in pairs(expected_props) do
-    print(prop, ret[prop], default)
     if ret[prop] == nil then
       print(string.format("WARNING %q was nil, setting to default", prop))
       ret[prop] = default
@@ -178,7 +208,6 @@ end
 function Driver:emit_state(device, state)
   self:emit_sensor_state(device, state)
   self:emit_switch_state(device, state)
-  local new_state = self:get_state_object(device)
   self:send_all_states_to_sse(device)
 end
 
@@ -209,7 +238,12 @@ function Driver:emit_switch_state(device, state)
   if state.level then
     print("emitting level", state.level, " for ", device.label)
     device:emit_event(capabilities.switchLevel.level(state.level))
-  end 
+  end
+  if device:supports_capability_by_id(ColorTemp.ID)
+  and state.colorTemp
+  then
+    device:emit_event(ColorTemp.colorTemperature(state.colorTemp or 0))
+  end
 end
 
 function Driver:get_url()
@@ -229,12 +263,8 @@ function Driver:get_sensor_states()
   local devices_list = {}
   for _, device in ipairs(driver:get_devices()) do
     if not is_bridge(device) then
-      local state = self:get_state_object(device)
-      table.insert(devices_list, {
-        device_id = device.id,
-        device_name = device.label,
-        state = state
-      })
+      local state = self:get_sensor_state(device)
+      table.insert(devices_list, state)
     end
   end
   return devices_list
@@ -251,6 +281,7 @@ function Driver:get_sensor_state(device)
   return {
     device_id = device.id,
     device_name = device.label,
+    profile = sensor_profile_name(device),
     state = state
   }
 end

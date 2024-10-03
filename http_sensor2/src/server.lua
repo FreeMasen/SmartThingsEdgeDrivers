@@ -157,6 +157,19 @@ return function(driver)
     }))
   end)
 
+  server:put("/profile", function(req, res)
+    if not req.body.device_id or not req.body.profile then
+      res:set_status(400):send('bad request')
+      return
+    end
+
+    local dev = lux.Error.assert(driver:get_device_info(req.body.device_id))
+    lux.Error.assert(dev:try_update_metadata({
+      profile = req.body.profile
+    }))
+    res:set_status(200):send("{}")
+  end)
+
   --- Handle the state update for a device
   server:put('/device_state', function(req, res)
     if not req.body.device_id or not req.body.state then
@@ -174,7 +187,7 @@ return function(driver)
     res:send(req.raw_body)
   end)
 
-  server:get('/subscribe', function (req, res)
+  server:get('/subscribe', function(req, res)
     local tx, rx = cosock.channel.new()
     table.insert(driver.sse_txs, tx)
     print("creating sse stream")

@@ -108,6 +108,18 @@ header>h1 {
     border-radius: 4px;
 }
 
+.device.extended .title {
+    background-color: var(--green);
+}
+
+.device.extended .color-temp {
+    display: unset;
+}
+
+.device.sensor .color-temp {
+    display: none;
+}
+
 .device .states {
     display: flex;
     flex-flow: column;

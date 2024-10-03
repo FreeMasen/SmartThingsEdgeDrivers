@@ -5,7 +5,18 @@ const NEW_BUTTON_ID = 'new-button';
  */
 const DEVICE_TEMPLATE = document.getElementById("device-template");
 let known_buttons = [];
-
+const SENSOR_CLASS = "sensor";
+const EXTEND_CLASS = "extended";
+const PROFILE_CLASS_MAP = Object.freeze({
+    ["http_sensor.v1"]: SENSOR_CLASS,
+    ["http_sensor2.v1"]: SENSOR_CLASS,
+    ["http_sensor-ext.v1"]: EXTEND_CLASS,
+    ["http_sensor-ext2.v1"]: EXTEND_CLASS,
+})
+const NOT_CLASS_MAP = Object.freeze({
+    [SENSOR_CLASS]: EXTEND_CLASS,
+    [EXTEND_CLASS]: SENSOR_CLASS,
+})
 
 let PROP = Object.freeze({
     CONTACT: "contact",
@@ -13,6 +24,7 @@ let PROP = Object.freeze({
     AIR: "air",
     SWITCH: "switch",
     LEVEL: "level",
+    COLOR_TEMP: "colorTemp",
 });
 
 let state_update_timers = {
@@ -61,6 +73,7 @@ function append_new_device(info) {
 }
 
 function handle_single_update(info) {
+    console.log("handle_single_update", info);
     let element = document.getElementById(info.device_id);
     switch (info.event) {
         case "init":
@@ -75,7 +88,14 @@ function handle_single_update(info) {
             if (!!element) {
                 element.parentElement.removeChild(element);
             }
-            break;    
+            break;
+        }
+        case "profile": {
+            let new_class = PROFILE_CLASS_MAP[info.profile]
+            let old_class = NOT_CLASS_MAP[new_class];
+            element.classList.add(new_class)
+            element.classList.remove(old_class);
+            update_device_card(element, info);
         }
     }
 }
@@ -121,6 +141,21 @@ function update_device_card(element, info, register_handlers) {
 
     let switch_level = element.querySelector(".switch-level");
     switch_level.value = info.state.switch_level;
+
+    let current_class = PROFILE_CLASS_MAP[info.profile] ?? SENSOR_CLASS;
+    let stale_class = NOT_CLASS_MAP[current_class] ?? EXTEND_CLASS;
+    element.classList.add(current_class);
+    element.classList.remove(stale_class);
+
+    if (current_class == EXTEND_CLASS) {
+        let color_temp = element.querySelector(".color-temp-value");
+        color_temp.value = info.state.color_temp;
+        if (register_handlers) {
+            color_temp.addEventListener("change", () => handle_change(device_id, PROP.COLOR_TEMP))
+        }
+    }
+
+
     if (register_handlers) {
         temp_value.addEventListener("change", () => handle_change(device_id, PROP.TEMP));
         temp_c.addEventListener("change", () => handle_change(device_id, PROP.TEMP));
@@ -227,6 +262,18 @@ async function send_state_update(device_id, properties) {
     if (resp.error) {
         console.error("Error making request", resp.error, resp.body);
     }
+}
+
+/**
+ * 
+ * @param {string} device_id 
+ * @param {string} profile
+ */
+async function send_profile_update(device_id, profile) {
+    return await make_request("/profile", "PUT", {
+        device_id,
+        profile,
+    })
 }
 
 
