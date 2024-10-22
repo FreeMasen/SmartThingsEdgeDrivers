@@ -406,38 +406,7 @@ function handle_change(device_id, prop) {
  * @param {string[]} properties 
  */
 async function send_state_update(device_id, properties) {
-    let device_card = document.getElementById(device_id);
-    let props = properties || ["contact", "temp", "air", "switch", "level"];
-    let state = {}
-    for (let prop of props) {
-        switch (prop) {
-            case "contact": {
-                state.contact = get_binary_value(device_card, ".contact-open", "open", "closed");
-                break;
-            }
-            case "temp": {
-                state.temp = {
-                    value: get_float_value(device_card, ".temp-value"),
-                    unit: get_binary_value(device_card, ".temp-f", "F", "C"),
-                };
-                break;
-            }
-            case "air": {
-                state.air = get_float_value(device_card, ".air-value");
-                break;
-            }
-            case "switch": {
-                state["switch"] = get_binary_value(device_card, ".switch-on", "on", "off");
-                break;
-            }
-            case "level": {
-                state.level = get_float_value(device_card, ".switch-level");
-                break;
-            }
-            default:
-                console.error("Invalid prop, skipping", prop)
-        }
-    }
+    let state = serialize_device(device_id, properties);
     let resp = await make_request("/device_state", "PUT", {
         device_id,
         state,
@@ -498,6 +467,55 @@ async function get_all_devices() {
         throw new Error(result.error)
     }
     return result.body;
+}
+
+function serialize_device(device_id, properties) {
+    let device_card = document.getElementById(device_id);
+    return serialize_device_card(device_card, properties)
+}
+
+function serialize_device_card(device_card, properties) {
+    let props = properties || ["contact", "temp", "air", "switch", "level"];
+    let state = {}
+    for (let prop of props) {
+        switch (prop) {
+            case "contact": {
+                state.contact = get_binary_value(device_card, ".contact-open", "open", "closed");
+                break;
+            }
+            case "temp": {
+                state.temp = {
+                    value: get_float_value(device_card, ".temp-value"),
+                    unit: get_binary_value(device_card, ".temp-f", "F", "C"),
+                };
+                break;
+            }
+            case "air": {
+                state.air = get_float_value(device_card, ".air-value");
+                break;
+            }
+            case "switch": {
+                state["switch"] = get_binary_value(device_card, ".switch-on", "on", "off");
+                break;
+            }
+            case "level": {
+                state.level = get_float_value(device_card, ".switch-level");
+                break;
+            }
+            default:
+                console.error("Invalid prop, skipping", prop)
+        }
+    }
+    return state
+}
+
+function serialize_devices() {
+    return Array.from(document.querySelectorAll(".device")).map(ele => serialize_device_card(ele))
+}
+
+async function put_into_datastore(key, value) {
+    await make_request(`/set-in-store/${key}`, "PUT", value || { when: new Date().toISOString(), where: location.toString(), data: serialize_devices() });
+    return (await make_request("/store-size")).body.size
 }
 
 (() => {

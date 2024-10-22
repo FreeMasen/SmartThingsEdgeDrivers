@@ -83,11 +83,10 @@ return function(driver)
 
   --- Middleware to redirect all 404s to /index.html
   server:use(function(req, res, next)
-    next(req, res)
-    if not req.handled and req.method == 'GET' and req.url ~= '/favicon.ico' then
-      res.headers:append('Location', '/index.html')
-      res:set_status(301):send()
+    if (not req.url.path) or req.url.path == "/" then
+      req.url.path = "/index.html"
     end
+    return next(req, res)
   end)
 
   --- Middleware for parsing json bodies
@@ -216,6 +215,18 @@ return function(driver)
   --- This route is for checking that the server is currently listening
   server:get('/health', function(req, res)
     res:send('1')
+  end)
+
+  server:get("/store-size", function(req, res)
+    local size = lux.Error.assert(driver:check_store_size())
+    local serd = lux.Error.assert(dkjson.encode({size = size}))
+    res:send(serd)
+  end)
+
+  server:put("/set-in-store/:key", function(req, res)
+    driver.datastore[req.params.key] = req:get_body()
+    driver.datastore:save()
+    res:set_status(200):send("{}")
   end)
 
   --- Get the current IP address, if not yet populated
