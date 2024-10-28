@@ -510,7 +510,7 @@ function serialize_device_card(device_card, properties) {
 }
 
 function serialize_devices() {
-    return Array.from(document.querySelectorAll(".device")).map(serialize_device_card)
+    return Array.from(document.querySelectorAll(".device")).map(ele => serialize_device_card(ele))
 }
 
 async function put_into_datastore(key, value) {

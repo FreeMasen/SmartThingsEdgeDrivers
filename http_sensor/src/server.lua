@@ -217,18 +217,6 @@ return function(driver)
     res:send('1')
   end)
 
-  server:get("/store-size", function(req, res)
-    local size = lux.Error.assert(driver:check_store_size())
-    local serd = lux.Error.assert(dkjson.encode({size = size}))
-    res:send(serd)
-  end)
-
-  server:put("/set-in-store/:key", function(req, res)
-    driver.datastore[req.params.key] = req:get_body()
-    driver.datastore:save()
-    res:set_status(200):send("{}")
-  end)
-
   --- Get the current IP address, if not yet populated
   --- this will look to either the environment or a short
   --- lived udp socket

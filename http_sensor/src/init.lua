@@ -60,32 +60,18 @@ local function device_removed(driver, device)
   })
 end
 
-local function append_event_to_store(device, event)
-  log.trace("append_event_to_store")
-  local events = device.datastore["events"] or {}
-  print("events", utils.stringify_table(events))
-  events[tostring(cosock.socket.gettime())] = event or "unknown event"
-  print("events+", utils.stringify_table(events))
-  device.datastore["events"] = events
-  device.datastore:save()
-end
-
 local function info_changed(driver, device, event, args)
   log.trace('Info Changed ', device.id, args.old_st_store.profile.id, device.profile.id)
   -- Check if the old profile is the same as the new profile by ID, note that these
   -- id values do not have the same ID value as `st deviceprofile`...
   if args.old_st_store.profile.id ~= device.profile.id then
-    append_event_to_store(device, "profile-changed")
     local event = driver:get_sensor_state(device)
     event.event = "profile"
     driver:send_to_all_sse(event)
-  else
-    append_event_to_store(device, "info-changed")
   end
 end
 
 local function do_refresh(driver, device)
-  append_event_to_store(device, "do_refresh")
     -- If this is a sensor device, re-emit the stored state
     if not is_bridge(device) then
         device_init(driver, device)
@@ -100,15 +86,12 @@ local function do_refresh(driver, device)
 end
 
 local function  do_set_level(driver, device, args)
-  append_event_to_store(device, "set-level")
   print("do_set_level", device.id, utils.stringify_table(args, "args", true))
   device:emit_event(capabilities.switchLevel.level(args.args.level))
   driver:send_all_states_to_sse(device, {switch_level = args.args.level})
 end
 
 local function  set_color_temp_handler(driver, device, args)
-  append_event_to_store(device, "color-temp")
-
   print("set_color_temp_handler", device.id, utils.stringify_table(args, "args", true))
   device:emit_event(capabilities.colorTemperature.colorTemperature(args.args.temp))
   -- driver:send_all_states_to_sse(device, {switch_level = args.args.level})
@@ -129,7 +112,6 @@ local driver = Driver(require("driver_name"), {
     [createTargetId] = {
       ["create"] = function(driver, device)
         log.info("createTarget")
-        append_event_to_store(device, "switch-off")
         discovery.add_sensor_device(driver, nil, driver.bridge_id)
       end
     },
@@ -139,11 +121,9 @@ local driver = Driver(require("driver_name"), {
     [capabilities.switch.ID] = {
       
       [capabilities.switch.commands.on.NAME] = function(driver, device)
-        append_event_to_store(device, "switch-on")
         driver:emit_state(device, {switch = "on"})
       end,
       [capabilities.switch.commands.off.NAME] = function(driver, device)
-        append_event_to_store(device, "switch-off")
         driver:emit_state(device, {switch = "off"})
       end,
     },
@@ -226,7 +206,6 @@ function Driver:get_state_object(device)
 end
 
 function Driver:emit_state(device, state)
-  append_event_to_store(device, state)
   self:emit_sensor_state(device, state)
   self:emit_switch_state(device, state)
   self:send_all_states_to_sse(device)
@@ -340,8 +319,5 @@ end)
 
 
 server(driver)
-driver:call_on_schedule(60, function(driver)
-  local store_size = driver:check_store_size()
-  print("Store size ", store_size)
-end)
+
 driver:run()
