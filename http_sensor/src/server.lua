@@ -62,7 +62,7 @@ local function setup_multicast_disocvery(server)
 end
 
 return function(driver)
-  local server = lux.Server.new_with(cosock.socket.tcp(), {
+  local server = lux.Server.new_with(assert(cosock.socket.tcp()), {
     env = 'debug'
   })
   --- Connect the server up to a new socket
