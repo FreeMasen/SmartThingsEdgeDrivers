@@ -1,0 +1,5 @@
+name: print_monster
+packageKey: print_monster
+permissions:
+  lan: {}
+  discovery: {}

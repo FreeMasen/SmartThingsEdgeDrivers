@@ -1,0 +1,16 @@
+name: print_monster.v1
+components:
+  - id: main
+    capabilities:
+    - id: switch
+      version: 1
+preferences:
+  - preferenceType: integer
+    title: Number of prints per switch
+    required: true
+    description: The number of print requests to make each time the switch is toggled
+    name: printCount
+    definition:
+      minimum: 10
+      maximum: 300
+      default: 100
