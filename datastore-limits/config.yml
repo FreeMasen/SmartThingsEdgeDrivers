@@ -1,0 +1,5 @@
+name: datastore limits
+packageKey: datastore limits
+permissions:
+  lan: {}
+  discovery: {}

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" name="viewport">
+    <meta charset="utf-8">
+    <title>Datastore Limits</title>
+    <link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+
+<body>
+    <header>
+        <h1 id="page-header" style="text-align:center">Datastore Limits</h1>
+    </header>
+    <div id="new-button-container">
+        <button type="button" id="new-button">Add Device</button>
+        <button type="button" id="toggle-all-on" class="bulk-opt-button">All On</button>
+        <button type="button" id="toggle-all-off" class="bulk-opt-button">All Off</button>
+    </div>
+    <div id="button-list-container">
+
+    </div>
+    <div id="datastore-details-container">
+        <h2 style="text-align:center">Datastore</h2>
+        <div id="driver-clear-container">
+            <button type="button" onclick="clear_datastore()">Clear Driver Log</button>
+            <button id="datastore-toggle" type="button" onclick="toggle_display_datastore()">Show Datastore</button>
+        </div>
+        <div id="datastore-size-container">
+            <span id="datastore-size"></span>
+        </div>
+        <div id="datastore-container" class="hidden"><pre></pre></div>
+    </div>
+
+    <template id="device-template">
+        <div class="device">
+            <span class="title"></span>
+            <div class="states">
+                <div class="switch-state">
+                    <span class="sensor-name">Switch</span>
+                    <div class="switch-info">
+                        <div class="radio-group">
+                            <label>
+                                On
+                                <input type="radio" name="switch-state" class="switch-on" value="on">
+                            </label>
+                            <label>
+                                Off
+                                <input type="radio" name="switch-state" class="switch-off" value="off">
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="clear-container">
+                <button type="button" class="clear-button">Clear Log</button>
+            </div>
+        </div>
+    </template>
+    <script type="text/javascript" src="/index.js">
+    </script>
+</body>
+
+</html>

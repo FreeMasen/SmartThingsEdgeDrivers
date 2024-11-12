@@ -1,0 +1,10 @@
+name: datastore_limits.v1
+components:
+- id: main
+  capabilities:
+  - id: switch
+    version: 1
+  - id: honestadmin11679.currentUrl
+    version: 1
+  categories:
+  - name: RemoteController
