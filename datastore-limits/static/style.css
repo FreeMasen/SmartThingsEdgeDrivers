@@ -1,0 +1,164 @@
+@media (prefers-color-scheme: light) {
+    :root {
+        --title-text: #EEEEEE;
+        --primary: #0790ED;
+        --error-background: #FF4337;
+        --error-text: #1F1F1F;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --title-text: #111344;
+        --primary: #DAE0F2;
+        --error-background: #4d0500;
+        --error-text: #DAE0F2;
+    }
+}
+
+html,
+body {
+    padding: 0;
+    margin: 0;
+    border: 0;
+    background-color: var(--title-text);
+}
+
+* {
+    font-family: sans-serif;
+}
+
+button {
+    margin-top: 10px;
+    height: 30px;
+    line-height: 30px;
+    text-align: center;
+    padding: 0 5px;
+    cursor: pointer;
+    background-color: var(--primary);
+    color: var(--title-text);
+    border: 0;
+    font-size: 13pt;
+    border-radius: 8px;
+
+}
+
+header {
+    text-align: center;
+    width: 100%;
+    color: #fff;
+    background-color: var(--primary);
+    margin: 0 0 8px 0;
+    padding: 10px 0;
+}
+
+body.error header {
+    background-color: var(--error-background) !important;
+    color: var(--error-text) !important;
+}
+
+body.error .device {
+    border-color: var(--red);
+}
+
+header>h1 {
+    margin: 0;
+    color: var(--title-text);
+}
+
+#new-button-container {
+    margin: auto;
+    width: 800px;
+    display: flex;
+    flex-flow: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+#new-button-container>button {
+    width: 150px;
+    margin: auto;
+    height: 50px;
+}
+
+#button-list-container {
+    display: flex;
+    flex-flow: row wrap;
+    align-items: center;
+    margin: auto;
+    justify-content: space-between;
+    max-width: 800px;
+}
+
+.device {
+    display: flex;
+    flex-flow: column;
+    width: 175px;
+    border: 1px solid var(--primary);
+    border-radius: 5px;
+    padding: 2px;
+    margin-top: 5px;
+}
+
+.device .title {
+    font-size: 15pt;
+    background: var(--primary);
+    width: 100%;
+    text-align: center;
+    color: var(--title-text);
+    padding-top: 5px;
+    border-radius: 4px;
+}
+
+.device .states {
+    display: flex;
+    flex-flow: column;
+    align-content: start;
+    align-items: start;
+    color: var(--primary);
+}
+
+.sensor-name {
+    color: var(--primary);
+    font-weight: bold;
+    margin-top: 5px;
+    display: inline-block;
+}
+
+#datastore-container {
+    border: 1px solid var(--primary);
+    border-radius: 5px;
+    padding: 2px;
+    min-width: 250px;
+    min-height: 250px;
+    max-width: 800px;
+    overflow-x: auto;
+    margin-bottom: 5px;
+}
+
+#datastore-container>pre {
+    margin: 0;
+    padding: 5px;
+    background-color: var(--title-text);
+    color: var(--primary);
+}
+
+#datastore-details-container {
+    display: flex;
+    flex-flow: column;
+    align-items: center;
+}
+#datastore-details-container > h2 {
+    color: var(--primary);
+}
+
+#datastore-size-container {
+    height: 25px;
+    text-align: center;
+    line-height: 25px;
+    color: var(--primary);
+}
+
+.hidden {
+    display: none;
+}

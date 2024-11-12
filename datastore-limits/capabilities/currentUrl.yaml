@@ -1,0 +1,16 @@
+id: honestadmin11679.currentUrl
+version: 1
+status: proposed
+name: Current URL
+attributes:
+  currentUrl:
+    schema:
+      type: object
+      properties:
+        value:
+          type: string
+      additionalProperties: false
+      required:
+        - value
+    enumCommands: []
+commands: {}
