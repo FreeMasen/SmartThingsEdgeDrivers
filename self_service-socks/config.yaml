@@ -1,0 +1,5 @@
+name: self-service-socks
+packageKey: self-service-socks
+permissions:
+  lan: {}
+  discovery: {}
