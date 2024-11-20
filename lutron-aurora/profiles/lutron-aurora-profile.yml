@@ -1,0 +1,28 @@
+name: lutron-aurora.v1
+components:
+- id: main
+  capabilities:
+    - id: switch
+      version: 1
+    - id: switchLevel
+      version: 1
+      config:
+        values:
+          - key: "level.value"
+            range: [1, 100]
+    - id: refresh
+      version: 1
+    - id: battery
+      version: 1
+  categories:
+  - name: Switch
+preferences:
+  - preferenceType: integer
+    name: stepSize
+    title: Step Size
+    required: true
+    description: The % step size to use for dimmer events
+    definition:
+      min: 1
+      max: 50
+      default: 5
