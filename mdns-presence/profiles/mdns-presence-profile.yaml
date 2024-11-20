@@ -1,0 +1,26 @@
+name: mdns-presence.v1
+components:
+  - id: main
+    capabilities:
+    - id: honestadmin11679.targetcreate
+      version: 1
+    - id: honestadmin11679.targetCount
+      version: 1
+preferences:
+  - preferenceType: integer
+    name: timeout
+    title: Tick for requesting presence info
+    required: true
+    description: Number of seconds between request
+    definition:
+      min: 1
+      max: 60
+      default: 5
+  - preferenceType: integer
+    name: awayTrigger
+    title: When Away
+    required: true
+    description: Number of seconds w/o a response to make a device as away
+    definition:
+      min: 60
+      default: 300

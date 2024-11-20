@@ -1,0 +1,17 @@
+name: mdns-presence-target.v1
+components:
+  - id: main
+    capabilities:
+    - id: presenceSensor
+      version: 1
+preferences:
+  - preferenceType: string
+    name: clientname
+    title: Client Name
+    required: true
+    description: The client name to probe for
+    definition:
+      minLength: 0
+      maxLength: 36
+      stringType: text
+      default: ''
