@@ -105,8 +105,15 @@ local driver = Driver(require("driver_name"), {
     infoChanged = info_changed
   },
   discovery = discovery.disco_handler,
-  driver_lifecycle = function()
-    os.exit()
+  driver_lifecycle = function(driver, event)
+    print("driver lifecycle event!", event)
+    if event == "shutdown" then
+      local bridge = driver:find_bridge()
+      if bridge then
+        bridge:emit_event(currentUrl.currentUrl(nil))
+      end
+      os.exit()
+    end
   end,
   capability_handlers = {
     [createTargetId] = {
@@ -286,19 +293,26 @@ function Driver:get_sensor_state(device)
   }
 end
 
-function driver:emit_current_url()
-  local url = self:get_url()
+function driver:find_bridge()
   local bridge
   for i, device in ipairs(self:get_devices()) do
-    if device:supports_capability_by_id(currentUrlID) then
+    if is_bridge(device) then
       self.bridge_id = device.id
       bridge = device
       break
     end
   end
-  if url and bridge then
-    bridge:emit_event(currentUrl.currentUrl(url))
+  return bridge
+end
+
+function driver:emit_current_url()
+  local url = self:get_url()
+  local bridge = self:find_bridge()
+  if not bridge then
+    return
   end
+  bridge:emit_event(currentUrl.currentUrl(url))
+  return url and true or false
 end
 
 function driver:check_store_size()
@@ -312,8 +326,11 @@ driver.sse_txs = {}
 
 driver:call_with_delay(0, function(driver)
   while true do
-    driver:emit_current_url()
-    cosock.socket.sleep(10)
+    if driver:emit_current_url() then
+      cosock.socket.sleep(600)
+    else
+      cosock.socket.sleep(10)
+    end
   end
 end)
 
