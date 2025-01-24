@@ -1,0 +1,32 @@
+name: timer.v1
+components:
+  - id: main
+    capabilities:
+      - id: switch
+        version: 1
+  - id: expected
+    capabilities:
+      - id: atmosphericPressureMeasurement
+        version: 1
+  - id: actual
+    capabilities:
+      - id: atmosphericPressureMeasurement
+        version: 1
+
+preferences:
+  - preferenceType: number
+    name: timeout
+    title: Seconds
+    required: true
+    description: Number of seconds this timer should wait
+    definition:
+      min: 0.5
+      max: 600
+      default: 1
+  - preferenceType: boolean
+    name: interval
+    title: Interval
+    description: If the timer should repeat once started
+    required: true
+    definition:
+      default: false

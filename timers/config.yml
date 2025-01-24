@@ -1,0 +1,5 @@
+name: "timers"
+packageKey: "timers"
+permissions:
+  lan: {}
+  discovery: {}
