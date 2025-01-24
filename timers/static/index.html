@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" name="viewport">
+    <meta charset="utf-8">
+    <title>Timer</title>
+    <link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+
+<body>
+    <header>
+        <h1 style="text-align:center">Timer</h1>
+    </header>
+    <div id="new-button-container">
+        <button id="new-button">Add Device</button>
+    </div>
+    <h2>
+        Timers
+    </h2>
+    <div id="button-list-container">
+
+    </div>
+    <h2>
+        History
+    </h2>
+    <table id="event-history">
+        <thead>
+
+            <tr>
+                <th>
+                    When
+                </th>
+                <th>
+                    Device
+                </th>
+                <th>
+                    Event Type
+                </th>
+                <th>
+                    Switch State
+                </th>
+                <th>
+                    Interval
+                </th>
+                <th>
+                    Timeout
+                </th>
+                <th>
+                    Last Measurement
+                </th>
+            </tr>
+        </thead>
+        <tbody id="event-history-body">
+        </tbody>
+    </table>
+
+    <template id="device-template">
+        <div class="device">
+            <span class="title"></span>
+            <div class="states">
+                <div class="switch-state">
+                    <span class="sensor-name">Switch</span>
+                    <div class="switch-info">
+                        <div class="radio-group">
+                            <label>
+                                On
+                                <input type="radio" name="switch-state" class="switch-on" value="on">
+                            </label>
+                            <label>
+                                Off
+                                <input type="radio" name="switch-state" class="switch-off" value="off">
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+    <template id="history-entry-template">
+        <tr class="history-entry">
+            <td class="when"></td>
+            <td class="device-name"></td>
+            <td class="event-type"></td>
+            <td class="switch-state"></td>
+            <td class="interval"></td>
+            <td class="timeout"></td>
+            <td class="last-measurement"></td>
+        </tr>
+    </template>
+    <script type="text/javascript" src="/index.js">
+    </script>
+</body>
+
+</html>
