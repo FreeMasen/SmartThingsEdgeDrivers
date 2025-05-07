@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" name="viewport">
+    <meta charset="utf-8">
+    <title>HTTP Sensor</title>
+    <link rel="stylesheet" type="text/css" href="/style.css" />
+</head>
+
+<body>
+    <header>
+        <h1 style="text-align:center">HTTP Sensor</h1>
+    </header>
+    <div id="new-button-container">
+        <button id="new-button">Add Device</button>
+    </div>
+    <div id="button-list-container">
+
+    </div>
+
+    <template id="device-template">
+        <div class="device">
+            <span class="title"></span>
+            <div class="states">
+                <div class="contact-state">
+                    <span class="sensor-name">Contact</span>
+                    <div class="radio-group">
+                        <label class="open-control">
+                            Open
+                            <input value="open" type="radio" class="contact-open" name="contact" />
+                        </label>
+                        <label class="closed-control">
+                            Closed
+                            <input value="closed" type="radio" class="contact-closed" name="contact" />
+                        </label>
+                    </div>
+                </div>
+                <div class="temp-state">
+                    <span class="sensor-name">Temp.</span>
+                    <div class="temp-info">
+                        <label for="temp-value" class="temp-input-container">
+                            <input type="number" name="temp-value" class="temp-value" />
+                        </label>
+                        <div class="radio-group">
+                            <label>
+                                C
+                                <input type="radio" class="temp-c" name="temp-unit" />
+                            </label>
+                            <label>
+                                F
+                                <input type="radio" class="temp-f" name="temp-unit" />
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="air-state">
+                    <span class="sensor-name">Air Q.</span>
+                    <div class="air-info">
+                        <label for="air-value">
+                            <input type="number" name="air-value" class="air-value" />
+                        </label>
+                        <span>CAQI</span>
+                    </div>
+                </div>
+                <div class="switch-state">
+                    <span class="sensor-name">Switch</span>
+                    <div class="switch-info">
+                        <div class="radio-group">
+                            <label>
+                                On
+                                <input type="radio" name="switch-state" class="switch-on" value="on">
+                            </label>
+                            <label>
+                                Off
+                                <input type="radio" name="switch-state" class="switch-off" value="off">
+                            </label>
+                        </div>
+                        <label>
+                            Level
+                            <input type="range" min="0" max="100" class="switch-level" />
+                        </label>
+                    </div>
+                </div>
+                <div class="color-temp">
+                    <span class="sensor-name">Color Temp</span>
+                    <div class="color-info">
+                        <label>
+                            Level
+                            <input type="range" min="0" max="3000" class="color-temp-value" />
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+    <script type="text/javascript" src="/index.js">
+    </script>
+</body>
+
+</html>

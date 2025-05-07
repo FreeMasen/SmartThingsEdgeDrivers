@@ -1,0 +1,5 @@
+name: "thread_tracking"
+packageKey: "thread_tracking"
+permissions:
+  lan: {}
+  discovery: {}
