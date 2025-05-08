@@ -1,0 +1,8 @@
+name: mpd_bridge.v1
+components:
+  - id: main
+    capabilities:
+    - id: honestadmin11679.targetcreate
+      version: 1
+    - id: honestadmin11679.collectgarbage
+      version: 1

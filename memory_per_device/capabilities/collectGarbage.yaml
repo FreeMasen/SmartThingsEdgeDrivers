@@ -1,0 +1,10 @@
+id: honestadmin11679.collectgarbage
+version: 1
+status: proposed
+name: collectgarbage
+ephemeral: false
+attributes: {}
+commands:
+  collect:
+    name: collect
+    arguments: []

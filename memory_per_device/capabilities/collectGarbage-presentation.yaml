@@ -1,0 +1,16 @@
+id: honestadmin11679.collectgarbage
+version: 1
+dashboard:
+  states:
+    - label: Collect Garbage
+      alternatives: []
+  basicPlus: []
+  actions:
+    - displayType: pushButton
+      pushButton:
+        command: collect
+detailView:
+  - label: Create Target
+    displayType: pushButton
+    pushButton:
+      command: collect

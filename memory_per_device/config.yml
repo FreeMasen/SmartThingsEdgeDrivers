@@ -1,0 +1,5 @@
+name: 'memory_per_device'
+packageKey: 'memory_per_device'
+permissions:
+  lan: {}
+  discovery: {}
